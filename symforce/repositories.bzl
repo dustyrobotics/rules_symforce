@@ -6,12 +6,12 @@ def symforce_deps():
     #native.new_local_repository(
     #    name = "symforce",
     #    build_file = "@rules_symforce//symforce:BUILD.symforce",
-    ##    path = "/home/asa/sbox/symforce"
+    #    path = "/home/asa/sbox/symforce"
     #)
     maybe(
         new_git_repository,
         name = "symforce",
         build_file = "@rules_symforce//symforce:BUILD.symforce",
         remote = "https://github.com/asa/symforce.git",
-        commit = "d20a4b5e6af535cf4472c2f13bc4589f5b4219e7",
+        commit = "f841150d60d5d9242d9391e918ce65b11e6828bd",
     )
