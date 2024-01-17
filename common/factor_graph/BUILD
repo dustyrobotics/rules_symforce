@@ -7,6 +7,7 @@ cc_library(
     ],
     deps = [
         "@automaton_common//common",
+        "@automaton_common//motion",
         "@automaton_common//common:cereal",
     ],
 )

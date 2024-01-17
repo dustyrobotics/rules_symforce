@@ -5,11 +5,11 @@
  */
 #pragma once
 #include "imsym/key.hh"
+#include "motion/types.hh"
 
 #include <immer/map.hpp>
 
 #include <optional>
-//
 //
 #include "common/cereal/immer_map.hh"
 #include "common/cereal/json.hh"
@@ -62,6 +62,11 @@ struct factor_graph_stats_t {
     std::optional<factor_graph_detailed_internals_t> internals;
 };
 
+struct solve_result_t {
+    ::motion::dyn_state_t state = {};
+    factor_graph::factor_graph_stats_t solve_stats;
+    size_t solve_iterations = 0;
+};
 }  // namespace factor_graph
 
 COMMON_STRUCT_HASH(factor_graph, coords_t, row, col);
@@ -73,3 +78,5 @@ COMMON_STRUCT(factor_graph, factor_graph_detailed_internals_t, covariances_by_ke
 
 COMMON_STRUCT(factor_graph, factor_graph_stats_t, num_factors, num_values, convergence_iterations, final_error,
               duration, last_state_time, internals);
+
+COMMON_STRUCT(factor_graph, solve_result_t, state, solve_stats, solve_iterations);
