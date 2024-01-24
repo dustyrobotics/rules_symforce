@@ -15,6 +15,7 @@
 #include "common/cereal/json.hh"
 #include "common/cereal/optional_nvp.hh"
 
+#include <cereal/types/optional.hpp>
 #include <lager/extra/cereal/immer_vector.hpp>
 
 #include "common/struct.hh"
@@ -34,16 +35,16 @@ struct sparse_matrix_t {
     immer::map<coords_t, double> data;
 };
 
+// this struct is not serializable
 struct factor_graph_detailed_internals_t {
     immer::map<imsym::key::key_t, Eigen::MatrixXd> covariances_by_key;
 
-    //    sym::sparse_matrix_structure_t jacobian_sparsity;
+    //   sym::sparse_matrix_structure_t jacobian_sparsity;
     Eigen::VectorXi linear_solver_ordering;
     //    sym::sparse_matrix_structure_t cholesky_factor_sparsity;
 
     //    from best_iteration
     Eigen::VectorXf residuals;
-    // Eigen::SparseMatrix<double> jacobian;
     sparse_matrix_t jacobian;
     // immer::vector<double> residuals;
     immer::vector<factor_index_t> factors_by_residual_idx;
@@ -73,10 +74,23 @@ COMMON_STRUCT_HASH(factor_graph, coords_t, row, col);
 
 COMMON_STRUCT(factor_graph, sparse_matrix_t, size, data);
 
-COMMON_STRUCT(factor_graph, factor_graph_detailed_internals_t, covariances_by_key, linear_solver_ordering, residuals,
-              jacobian, factors_by_residual_idx, residual_indices_by_factor_id);
+COMMON_STRUCT(factor_graph,                       //
+              factor_graph_detailed_internals_t,  //
+              covariances_by_key,                 //
+              linear_solver_ordering,             //
+              residuals,                          //
+              jacobian,                           //
+              factors_by_residual_idx,            //
+              residual_indices_by_factor_id       //
+);
 
-COMMON_STRUCT(factor_graph, factor_graph_stats_t, num_factors, num_values, convergence_iterations, final_error,
-              duration, last_state_time, internals);
+COMMON_STRUCT(factor_graph, factor_graph_stats_t,
+              num_factors,             //
+              num_values,              //
+              convergence_iterations,  //
+              final_error,             //
+              duration,                //
+              last_state_time,         //
+              internals);
 
 COMMON_STRUCT(factor_graph, solve_result_t, state, solve_stats, solve_iterations);
