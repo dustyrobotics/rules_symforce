@@ -35,18 +35,24 @@ struct sparse_matrix_t {
     immer::map<coords_t, double> data;
 };
 
-// this struct is not serializable
+struct dense_matrix_t {
+    coords_t size;
+    immer::vector<double> data;
+};
+
 struct factor_graph_detailed_internals_t {
-    immer::map<imsym::key::key_t, Eigen::MatrixXd> covariances_by_key;
+    // immer::map<imsym::key::key_t, Eigen::MatrixXd> covariances_by_key;
+    immer::map<imsym::key::key_t, dense_matrix_t> covariances_by_key;
 
     //   sym::sparse_matrix_structure_t jacobian_sparsity;
-    Eigen::VectorXi linear_solver_ordering;
+    immer::vector<size_t> linear_solver_ordering;
     //    sym::sparse_matrix_structure_t cholesky_factor_sparsity;
 
     //    from best_iteration
-    Eigen::VectorXf residuals;
+    // Eigen::VectorXf residuals;
+    immer::vector<float> residuals;
+
     sparse_matrix_t jacobian;
-    // immer::vector<double> residuals;
     immer::vector<factor_index_t> factors_by_residual_idx;
     immer::map<factor_index_t, immer::vector<residual_index_t>> residual_indices_by_factor_id;
 };
@@ -73,6 +79,7 @@ struct solve_result_t {
 COMMON_STRUCT_HASH(factor_graph, coords_t, row, col);
 
 COMMON_STRUCT(factor_graph, sparse_matrix_t, size, data);
+COMMON_STRUCT(factor_graph, dense_matrix_t, size, data);
 
 COMMON_STRUCT(factor_graph,                       //
               factor_graph_detailed_internals_t,  //
