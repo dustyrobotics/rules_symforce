@@ -54,9 +54,6 @@ struct key_t {
     */
 };
 
-// return time in ns
-auto get_t(const key_t& k) -> size_t;
-
 }  // namespace imsym::key
 
 template <>

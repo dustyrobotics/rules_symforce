@@ -5,10 +5,4 @@
  */
 #include "imsym/imsym.hh"
 
-namespace imsym::key {
-
-// return time in ns
-auto get_t(const key_t& k) -> size_t { return static_cast<size_t>(k.sub); };
-// TODO what about binary factors?
-
-}  // namespace imsym::key
+namespace imsym::key {}  // namespace imsym::key
