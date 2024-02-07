@@ -17,13 +17,14 @@
 
 #include <cereal/types/optional.hpp>
 #include <lager/extra/cereal/immer_vector.hpp>
-
 #include "common/struct.hh"
+
 namespace factor_graph {
 
 using timestamp_t = size_t;
-using factor_index_t = size_t;
-using residual_index_t = size_t;
+using factor_index_t = int32_t;
+using residual_index_t = int32_t;
+using dim_t = int32_t;
 
 struct coords_t {
     long row;
@@ -40,8 +41,12 @@ struct dense_matrix_t {
     immer::vector<double> data;
 };
 
-struct factor_graph_detailed_internals_t {
-    // immer::map<imsym::key::key_t, Eigen::MatrixXd> covariances_by_key;
+struct offset_t {
+    residual_index_t offset;
+    dim_t dim;
+};
+
+struct detailed_internals_t {
     immer::map<imsym::key::key_t, dense_matrix_t> covariances_by_key;
 
     //   sym::sparse_matrix_structure_t jacobian_sparsity;
@@ -49,12 +54,12 @@ struct factor_graph_detailed_internals_t {
     //    sym::sparse_matrix_structure_t cholesky_factor_sparsity;
 
     //    from best_iteration
-    // Eigen::VectorXf residuals;
     immer::vector<float> residuals;
 
     sparse_matrix_t jacobian;
-    immer::vector<factor_index_t> factors_by_residual_idx;
-    immer::map<factor_index_t, immer::vector<residual_index_t>> residual_indices_by_factor_id;
+
+    // pair of residual index and dim of the factor residual block
+    immer::vector<offset_t> factor_residual_offsets;
 };
 
 struct factor_graph_stats_t {
@@ -66,7 +71,7 @@ struct factor_graph_stats_t {
     timestamp_t duration;         // how long it took to solve
     timestamp_t last_state_time;  // the time of the last state we solved
 
-    std::optional<factor_graph_detailed_internals_t> internals;
+    std::optional<detailed_internals_t> internals;
 };
 
 struct solve_result_t {
@@ -81,14 +86,15 @@ COMMON_STRUCT_HASH(factor_graph, coords_t, row, col);
 COMMON_STRUCT(factor_graph, sparse_matrix_t, size, data);
 COMMON_STRUCT(factor_graph, dense_matrix_t, size, data);
 
-COMMON_STRUCT(factor_graph,                       //
-              factor_graph_detailed_internals_t,  //
-              covariances_by_key,                 //
-              linear_solver_ordering,             //
-              residuals,                          //
-              jacobian,                           //
-              factors_by_residual_idx,            //
-              residual_indices_by_factor_id       //
+COMMON_STRUCT_HASH(factor_graph, offset_t, offset, dim);
+
+COMMON_STRUCT(factor_graph,            //
+              detailed_internals_t,    //
+              covariances_by_key,      //
+              linear_solver_ordering,  //
+              residuals,               //
+              jacobian,                //
+              factor_residual_offsets  //
 );
 
 COMMON_STRUCT(factor_graph, factor_graph_stats_t,
