@@ -13,5 +13,5 @@ def symforce_deps():
         name = "symforce",
         build_file = "@rules_symforce//symforce:BUILD.symforce",
         remote = "https://github.com/asa/symforce.git",
-        commit = "0294d57c2155d07ca4df0c593733680631f5c066",
+        commit = "7fac7d888b4ec894f7cb66e6d1acc3aa0121d01c",
     )
