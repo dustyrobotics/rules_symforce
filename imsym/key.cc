@@ -5,4 +5,4 @@
  */
 #include "imsym/imsym.hh"
 
-namespace imsym::key {}  // namespace imsym::key
+namespace imsym::key {}   // namespace imsym::key

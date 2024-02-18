@@ -54,13 +54,15 @@ struct key_t {
     */
 };
 
-}  // namespace imsym::key
+}   // namespace imsym::key
 
-template <>
+template<>
 struct fmt::formatter<imsym::key::key_t> {
-    static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
 
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(const imsym::key::key_t& k, FormatContext& ctx) {
         using imsym::key::key_t;
         if (k.sub == key_t::kInvalidSub and k.super == key_t::kInvalidSuper) {

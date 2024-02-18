@@ -4,23 +4,22 @@
  * Written by Asa Hammond <asa@automaton.is>, 2021
  */
 #define CATCH_CONFIG_MAIN
-#include "common/imsym/imsym.hh"
+#include "external/spdlog/include/spdlog/spdlog.h"
+#include "imsym/imsym.hh"
 
-#include <spdlog/spdlog.h>
+#include <catch2/catch_all.hpp>
 #include <sym/factors/between_factor_pose3.h>
 #include <sym/factors/between_factor_rot3.h>
 #include <sym/factors/prior_factor_pose3.h>
 #include <sym/factors/prior_factor_pose3_position.h>
 #include <sym/factors/prior_factor_rot3.h>
+#include <sym/index_entry_t.hpp>
 #include <sym/pose3.h>
 #include <symforce/opt/factor.h>
 #include <symforce/opt/key.h>
 #include <symforce/opt/optimizer.h>
 #include <symforce/opt/util.h>
 #include <symforce/opt/values.h>
-#include <catch2/catch_all.hpp>
-#include <immer/array.hpp>
-#include <sym/index_entry_t.hpp>
 
 using Catch::Matchers::WithinAbs;
 constexpr double tol = 1e-10;
@@ -108,8 +107,8 @@ TEST_CASE("conversion between immutable and base symforce types") {
     SECTION("index entry type") {
         auto entry = imsym::values::index_entry_t{
             .key = imsym::key::key_t{.letter = 'P', .sub = 0},
-            .type = sym::type_t{},  // enum entry for different types, storageops fromStorage loads
-                                    // from scalar* data pointer
+            .type = sym::type_t{},   // enum entry for different types, storageops fromStorage loads
+                                     // from scalar* data pointer
             .offset = 100,
             .storage_dim = 3,
             .tangent_dim = 3,
@@ -139,7 +138,8 @@ TEST_CASE("conversion between immutable and base symforce types") {
 
             SECTION("set, remove, set, should have a gap") {
                 auto sym_key_1 = sym::Key('P', 1);
-                auto sym_pose_1 = Pose3d(Rot3d::FromQuaternion({7, 8, 9, 10}), Vector3d{11, 12, 13});
+                auto sym_pose_1 =
+                    Pose3d(Rot3d::FromQuaternion({7, 8, 9, 10}), Vector3d{11, 12, 13});
                 values = imsym::values::set<Scalar>(values, imsym::key::to(sym_key_1), sym_pose_1);
                 sym_values.Set(sym_key_1, sym_pose_1);
 
@@ -160,9 +160,11 @@ TEST_CASE("conversion between immutable and base symforce types") {
                     CHECK_EQUAL(values, sym_values);
                     SECTION("add another value") {
                         auto sym_key_2 = sym::Key('P', 2);
-                        auto sym_pose_2 = Pose3d(Rot3d::FromQuaternion({14, 15, 16, 17}), Vector3d{18, 19, 20});
+                        auto sym_pose_2 =
+                            Pose3d(Rot3d::FromQuaternion({14, 15, 16, 17}), Vector3d{18, 19, 20});
 
-                        values = imsym::values::set<Scalar>(values, imsym::key::to(sym_key_2), sym_pose_2);
+                        values = imsym::values::set<Scalar>(
+                            values, imsym::key::to(sym_key_2), sym_pose_2);
                         sym_values.Set(sym_key_2, sym_pose_2);
 
                         CHECK_EQUAL(values, sym_values);
@@ -199,7 +201,8 @@ TEST_CASE("conversion between immutable and base symforce types") {
                                 CHECK_VALUES_EQUAL(imsym_cloned_values, sym_values);
 
                                 SECTION("clone imsym::values_t") {
-                                    auto cloned_sym_values = imsym::values::clone(imsym_cloned_values);
+                                    auto cloned_sym_values =
+                                        imsym::values::clone(imsym_cloned_values);
 
                                     CHECK_DATA_EQUAL(imsym_cloned_values, sym_values);
                                     CHECK_VALUES_EQUAL(imsym_cloned_values, sym_values);
@@ -211,74 +214,97 @@ TEST_CASE("conversion between immutable and base symforce types") {
                                         sym::Valuesd values;
 
                                         // Costs
-                                        const double prior_start_sigma = 0.1;  // [rad]
-                                        const double prior_last_sigma = 0.1;   // [rad]
-                                        const double between_sigma = 1.0;      // [rad]
+                                        const double prior_start_sigma = 0.1;   // [rad]
+                                        const double prior_last_sigma = 0.1;    // [rad]
+                                        const double between_sigma = 1.0;       // [rad]
 
                                         // Set points (doing 180 rotation and 5m translation to keep
                                         // it hard)
-                                        const sym::Pose3d prior_start = sym::Pose3d(
-                                            sym::Rot3d::FromYawPitchRoll(0.0, 0.0, 0.0), Eigen::Vector3d::Zero());
+                                        const sym::Pose3d prior_start =
+                                            sym::Pose3d(sym::Rot3d::FromYawPitchRoll(0.0, 0.0, 0.0),
+                                                        Eigen::Vector3d::Zero());
 
                                         const sym::Pose3d prior_last = sym::Pose3d(
-                                            sym::Rot3d::FromYawPitchRoll(M_PI, 0.0, 0.0), Eigen::Vector3d(5, 0, 0));
+                                            sym::Rot3d::FromYawPitchRoll(M_PI, 0.0, 0.0),
+                                            Eigen::Vector3d(5, 0, 0));
 
-                                        const auto create_prior_factor = [&epsilon](const sym::Key& key,
-                                                                                    const sym::Pose3d& prior,
-                                                                                    const double sigma) {
-                                            return sym::Factord::Jacobian(
-                                                [&prior, sigma, &epsilon](const sym::Pose3d& pose,
-                                                                          sym::Vector6d* const res,
-                                                                          sym::Matrix66d* const jac) {
-                                                    const sym::Matrix66d sqrt_info =
-                                                        sym::Vector6d::Constant(1 / sigma).asDiagonal();
+                                        const auto create_prior_factor =
+                                            [&epsilon](const sym::Key& key,
+                                                       const sym::Pose3d& prior,
+                                                       const double sigma) {
+                                                return sym::Factord::Jacobian(
+                                                    [&prior, sigma, &epsilon](
+                                                        const sym::Pose3d& pose,
+                                                        sym::Vector6d* const res,
+                                                        sym::Matrix66d* const jac) {
+                                                        const sym::Matrix66d sqrt_info =
+                                                            sym::Vector6d::Constant(1 / sigma)
+                                                                .asDiagonal();
 
-                                                    sym::PriorFactorPose3<double>(pose, prior, sqrt_info, epsilon, res,
-                                                                                  jac);
-                                                },
-                                                {key});
-                                        };
+                                                        sym::PriorFactorPose3<double>(pose,
+                                                                                      prior,
+                                                                                      sqrt_info,
+                                                                                      epsilon,
+                                                                                      res,
+                                                                                      jac);
+                                                    },
+                                                    {key});
+                                            };
 
                                         // Add priors
                                         std::vector<sym::Factord> factors;
-                                        factors.push_back(
-                                            create_prior_factor({'P', 0}, prior_start, prior_start_sigma));
-                                        factors.push_back(
-                                            create_prior_factor({'P', num_keys - 1}, prior_last, prior_last_sigma));
+                                        factors.push_back(create_prior_factor(
+                                            {'P', 0}, prior_start, prior_start_sigma));
+                                        factors.push_back(create_prior_factor(
+                                            {'P', num_keys - 1}, prior_last, prior_last_sigma));
 
-                                        const auto create_position_prior_factor = [&epsilon](const sym::Key& key,
-                                                                                             const sym::Vector3d& prior,
-                                                                                             const double sigma) {
-                                            return sym::Factord::Jacobian(
-                                                [&prior, sigma, &epsilon](const sym::Pose3d& pose,
-                                                                          sym::Vector3d* const res,
-                                                                          sym::Matrix36d* const jac) {
-                                                    const sym::Matrix33d sqrt_info =
-                                                        sym::Vector3d::Constant(1 / sigma).asDiagonal();
+                                        const auto create_position_prior_factor =
+                                            [&epsilon](const sym::Key& key,
+                                                       const sym::Vector3d& prior,
+                                                       const double sigma) {
+                                                return sym::Factord::Jacobian(
+                                                    [&prior, sigma, &epsilon](
+                                                        const sym::Pose3d& pose,
+                                                        sym::Vector3d* const res,
+                                                        sym::Matrix36d* const jac) {
+                                                        const sym::Matrix33d sqrt_info =
+                                                            sym::Vector3d::Constant(1 / sigma)
+                                                                .asDiagonal();
 
-                                                    sym::PriorFactorPose3Position<double>(pose, prior, sqrt_info,
-                                                                                          epsilon, res, jac);
-                                                },
-                                                {key});
-                                        };
+                                                        sym::PriorFactorPose3Position<double>(
+                                                            pose,
+                                                            prior,
+                                                            sqrt_info,
+                                                            epsilon,
+                                                            res,
+                                                            jac);
+                                                    },
+                                                    {key});
+                                            };
 
                                         // push the signal off to the left a bit
                                         factors.push_back(create_position_prior_factor(
-                                            {'P', num_keys / 2}, Eigen::Vector3d{2.5, 1.0, 0.0}, prior_last_sigma));
+                                            {'P', num_keys / 2},
+                                            Eigen::Vector3d{2.5, 1.0, 0.0},
+                                            prior_last_sigma));
 
                                         // Add between factors in a chain
                                         for (int i = 0; i < num_keys - 1; ++i) {
                                             factors.push_back(sym::Factord::Jacobian(
-                                                [&between_sigma, &epsilon](const sym::Pose3d& a, const sym::Pose3d& b,
-                                                                           sym::Vector6d* const res,
-                                                                           Eigen::Matrix<double, 6, 12>* const jac) {
+                                                [&between_sigma, &epsilon](
+                                                    const sym::Pose3d& a,
+                                                    const sym::Pose3d& b,
+                                                    sym::Vector6d* const res,
+                                                    Eigen::Matrix<double, 6, 12>* const jac) {
                                                     const sym::Matrix66d sqrt_info =
-                                                        sym::Vector6d::Constant(1 / between_sigma).asDiagonal();
+                                                        sym::Vector6d::Constant(1 / between_sigma)
+                                                            .asDiagonal();
 
-                                                    const sym::Pose3d a_T_b = sym::Pose3d::Identity();
+                                                    const sym::Pose3d a_T_b =
+                                                        sym::Pose3d::Identity();
 
-                                                    sym::BetweenFactorPose3<double>(a, b, a_T_b, sqrt_info, epsilon,
-                                                                                    res, jac);
+                                                    sym::BetweenFactorPose3<double>(
+                                                        a, b, a_T_b, sqrt_info, epsilon, res, jac);
                                                 },
                                                 /* keys */ {{'P', i}, {'P', i + 1}}));
                                         }
@@ -287,8 +313,8 @@ TEST_CASE("conversion between immutable and base symforce types") {
                                         // first prior
                                         std::mt19937 gen(42);
                                         for (int i = 0; i < num_keys; ++i) {
-                                            const sym::Pose3d value =
-                                                prior_start.Retract(0.4 * sym::Random<sym::Vector6d>(gen));
+                                            const sym::Pose3d value = prior_start.Retract(
+                                                0.4 * sym::Random<sym::Vector6d>(gen));
                                             values.Set<sym::Pose3d>({'P', i}, value);
                                         }
 
@@ -299,12 +325,12 @@ TEST_CASE("conversion between immutable and base symforce types") {
                                         // Optimize
                                         sym::optimizer_params_t params = DefaultLmParams();
                                         params.iterations = 50;
+                                        params.include_jacobians = true;
+                                        params.check_derivatives = true;
                                         params.early_exit_min_reduction = 0.0001;
 
-                                        sym::Optimizer<double> optimizer(params, factors, epsilon, "sym::Optimize", {},
-                                                                         /* debug_stats */ false,
-                                                                         /* check_derivatives */ true,
-                                                                         /* include_jacobians */ true);
+                                        sym::Optimizer<double> optimizer(
+                                            params, factors, "sym::Optimize", {}, epsilon);
 
                                         // round trip through imsym
                                         auto imsym_values = imsym::values::clone(values);
@@ -520,14 +546,16 @@ TEST_CASE("check diff operations") {
             CHECK(values3.data == values2.data);
         }
         */
-        SECTION("merge n values") {}
+        SECTION("merge n values") {
+        }
     }
 
     WHEN("update and extract") {
         auto values_before_opt = imsym::values::valuesd_t{
             {imsym::key::to(sym_key_0), sym_pose_0},
             {imsym::key::to(sym_key_1), sym_pose_1},
-            {imsym::key::key_t{.letter = 'l'}, Pose3d(Rot3d::FromQuaternion({7, 8, 9, 10}), Vector3d{11, 12, 13})},
+            {imsym::key::key_t{.letter = 'l'},
+             Pose3d(Rot3d::FromQuaternion({7, 8, 9, 10}), Vector3d{11, 12, 13})},
             {imsym::key::key_t{.letter = 'm'}, 1.2345},
         };
 
@@ -542,23 +570,45 @@ TEST_CASE("check diff operations") {
                 auto values_after_update =
                     update(index_before_opt, index_after_opt, values_before_opt, values_after_opt);
 
-                spdlog::error("values_before_opt {}", values_before_opt);
-                spdlog::error("values_after_opt {}", values_after_opt);
-                spdlog::error("values_after_update {}", values_after_update);
+                spdlog::info("values_before_opt {}", values_before_opt);
+                spdlog::info("values_after_opt {}", values_after_opt);
+                spdlog::info("values_after_update {}", values_after_update);
             }
         }
 
         WHEN("extract") {
             // using a set of keys, make a new values with just that data
 
-            auto idx = create_index(values_before_opt, {imsym::key::to(sym_key_1), imsym::key::key_t{.letter = 'l'}});
+            auto idx = create_index(values_before_opt,
+                                    {imsym::key::to(sym_key_1), imsym::key::key_t{.letter = 'l'}});
 
             for (const auto i : idx.entries) {
-                spdlog::error("idx {}", i);
+                spdlog::info("idx {}", i);
             }
 
             auto extracted = extract(values_after_opt, idx);
-            spdlog::error("extracted {}", extracted);
+            spdlog::info("extracted {}", extracted);
+            CHECK(has(extracted, imsym::key::key_t{.letter = 'l'}));
+            CHECK(has(extracted, imsym::key::to(sym_key_1)));
+            CHECK(not has(extracted, imsym::key::to(sym_key_0)));
         }
     }
+}
+
+TEST_CASE("print with fmt") {
+    auto sym_key_0 = sym::Key('P', 0);
+    auto sym_pose_0 = Pose3d(Rot3d::FromQuaternion({0, 1, 2, 3}), Vector3d{4, 5, 6});
+    auto sym_key_1 = sym::Key('P', 1);
+    auto sym_pose_1 = Pose3d(Rot3d::FromQuaternion({10, 11, 12, 13}), Vector3d{14, 15, 16});
+
+    auto values_before_opt = imsym::values::valuesd_t{
+        {imsym::key::to(sym_key_0), sym_pose_0},
+        {imsym::key::to(sym_key_1), sym_pose_1},
+        {imsym::key::key_t{.letter = 'l'},
+         Pose3d(Rot3d::FromQuaternion({7, 8, 9, 10}), Vector3d{11, 12, 13})},
+        {imsym::key::key_t{.letter = 'm'}, 1.2345},
+    };
+
+    spdlog::info("values_before_opt {}", values_before_opt);
+    spdlog::info("values_before_opt {}", fmt::format("{}", values_before_opt));
 }

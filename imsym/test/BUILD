@@ -6,8 +6,7 @@ cc_test(
     copts = ["-Wno-unused-variable"],
     linkstatic = True,
     deps = [
-        "//common/imsym",
-        "//solvers/lee/factors",
+        "//imsym",
         "@catch2//:catch2_main",
     ],
 )

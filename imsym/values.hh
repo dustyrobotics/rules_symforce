@@ -9,10 +9,6 @@
 #include "common/struct.hh"
 #include "imsym/imsym.hh"
 
-#include <spdlog/spdlog.h>
-#include <sym/util/typedefs.h>
-#include <symforce/opt/key.h>
-#include <symforce/opt/values.h>
 #include <immer/flex_vector.hpp>
 #include <immer/map.hpp>
 #include <immer/vector.hpp>
@@ -21,6 +17,10 @@
 #include <lager/extra/cereal/immer_map.hpp>
 #include <lager/extra/cereal/immer_vector.hpp>
 #include <lcmtypes/sym/type_t.hpp>
+#include <spdlog/spdlog.h>
+#include <sym/util/typedefs.h>
+#include <symforce/opt/key.h>
+#include <symforce/opt/values.h>
 
 #include <variant>
 #include <vector>
@@ -36,7 +36,9 @@ inline auto to(const sym::Key& other) -> key_t {
 }
 
 // TODO move to utils / interop
-inline auto to(const key::key_t& other) -> sym::Key { return sym::Key{other.letter, other.sub, other.super}; }
+inline auto to(const key::key_t& other) -> sym::Key {
+    return sym::Key{other.letter, other.sub, other.super};
+}
 
 /*
  * convert a vector of sym::Key to a vector of imsym::key_t
@@ -65,7 +67,7 @@ inline auto to(const immer::vector<imsym::key::key_t>& other) -> std::vector<sym
     return out;
 }
 
-}  // namespace imsym::key
+}   // namespace imsym::key
 
 /*
  * immutable variant of symforce structures for use in logging and playback
@@ -83,7 +85,7 @@ using std::move;
  */
 struct index_entry_t {
     imsym::key::key_t key;
-    sym::type_t type;  // type of the underlying storage we should convert this entry to
+    sym::type_t type;   // type of the underlying storage we should convert this entry to
 
     // Location within the storage or tangent vector, depending on context
     int32_t offset;
@@ -99,42 +101,113 @@ struct index_t {
     immer::flex_vector<index_entry_t> entries;
 };
 
-}  // namespace imsym::values
+}   // namespace imsym::values
 
 namespace imsym::values {
 
-template <typename Scalar>
-using AllowedTypes = std::variant<
-    Scalar,
-    // sym::type_t::DATABUFFER", databuffers is unsupported ";
-    // sym::type_t::VECTORX "VectorX is unsupported"
-    sym::Rot2<Scalar>, sym::Rot3<Scalar>, sym::Pose2<Scalar>, sym::Pose3<Scalar>, sym::Unit3<Scalar>,
-    sym::Vector1<Scalar>, sym::Vector2<Scalar>, sym::Vector3<Scalar>, sym::Vector4<Scalar>, sym::Vector5<Scalar>,
-    sym::Vector6<Scalar>, sym::Vector7<Scalar>, sym::Vector8<Scalar>, sym::Vector9<Scalar>, sym::Matrix12<Scalar>,
-    sym::Matrix13<Scalar>, sym::Matrix14<Scalar>, sym::Matrix15<Scalar>, sym::Matrix16<Scalar>, sym::Matrix17<Scalar>,
-    sym::Matrix18<Scalar>, sym::Matrix19<Scalar>, sym::Matrix22<Scalar>, sym::Matrix23<Scalar>, sym::Matrix24<Scalar>,
-    sym::Matrix25<Scalar>, sym::Matrix26<Scalar>, sym::Matrix27<Scalar>, sym::Matrix28<Scalar>, sym::Matrix29<Scalar>,
-    sym::Matrix32<Scalar>, sym::Matrix33<Scalar>, sym::Matrix34<Scalar>, sym::Matrix35<Scalar>, sym::Matrix36<Scalar>,
-    sym::Matrix37<Scalar>, sym::Matrix38<Scalar>, sym::Matrix39<Scalar>, sym::Matrix42<Scalar>, sym::Matrix43<Scalar>,
-    sym::Matrix44<Scalar>, sym::Matrix45<Scalar>, sym::Matrix46<Scalar>, sym::Matrix47<Scalar>, sym::Matrix48<Scalar>,
-    sym::Matrix49<Scalar>, sym::Matrix52<Scalar>, sym::Matrix53<Scalar>, sym::Matrix54<Scalar>, sym::Matrix55<Scalar>,
-    sym::Matrix56<Scalar>, sym::Matrix57<Scalar>, sym::Matrix58<Scalar>, sym::Matrix59<Scalar>, sym::Matrix62<Scalar>,
-    sym::Matrix63<Scalar>, sym::Matrix64<Scalar>, sym::Matrix65<Scalar>, sym::Matrix66<Scalar>, sym::Matrix67<Scalar>,
-    sym::Matrix68<Scalar>, sym::Matrix69<Scalar>, sym::Matrix72<Scalar>, sym::Matrix73<Scalar>, sym::Matrix74<Scalar>,
-    sym::Matrix75<Scalar>, sym::Matrix76<Scalar>, sym::Matrix77<Scalar>, sym::Matrix78<Scalar>, sym::Matrix79<Scalar>,
-    sym::Matrix82<Scalar>, sym::Matrix83<Scalar>, sym::Matrix84<Scalar>, sym::Matrix85<Scalar>, sym::Matrix86<Scalar>,
-    sym::Matrix87<Scalar>, sym::Matrix88<Scalar>, sym::Matrix89<Scalar>, sym::Matrix92<Scalar>, sym::Matrix93<Scalar>,
-    sym::Matrix94<Scalar>, sym::Matrix95<Scalar>, sym::Matrix96<Scalar>, sym::Matrix97<Scalar>, sym::Matrix98<Scalar>,
-    sym::Matrix99<Scalar>, sym::ATANCameraCal<Scalar>, sym::DoubleSphereCameraCal<Scalar>,
-    sym::EquirectangularCameraCal<Scalar>, sym::LinearCameraCal<Scalar>, sym::PolynomialCameraCal<Scalar>,
-    sym::SphericalCameraCal<Scalar>>;
+template<typename Scalar>
+using AllowedTypes = std::variant<Scalar,
+                                  // sym::type_t::DATABUFFER", databuffers is unsupported ";
+                                  // sym::type_t::VECTORX "VectorX is unsupported"
+                                  sym::Rot2<Scalar>,
+                                  sym::Rot3<Scalar>,
+                                  sym::Pose2<Scalar>,
+                                  sym::Pose3<Scalar>,
+                                  sym::Unit3<Scalar>,
+                                  sym::Vector1<Scalar>,
+                                  sym::Vector2<Scalar>,
+                                  sym::Vector3<Scalar>,
+                                  sym::Vector4<Scalar>,
+                                  sym::Vector5<Scalar>,
+                                  sym::Vector6<Scalar>,
+                                  sym::Vector7<Scalar>,
+                                  sym::Vector8<Scalar>,
+                                  sym::Vector9<Scalar>,
+                                  sym::Matrix12<Scalar>,
+                                  sym::Matrix13<Scalar>,
+                                  sym::Matrix14<Scalar>,
+                                  sym::Matrix15<Scalar>,
+                                  sym::Matrix16<Scalar>,
+                                  sym::Matrix17<Scalar>,
+                                  sym::Matrix18<Scalar>,
+                                  sym::Matrix19<Scalar>,
+                                  sym::Matrix22<Scalar>,
+                                  sym::Matrix23<Scalar>,
+                                  sym::Matrix24<Scalar>,
+                                  sym::Matrix25<Scalar>,
+                                  sym::Matrix26<Scalar>,
+                                  sym::Matrix27<Scalar>,
+                                  sym::Matrix28<Scalar>,
+                                  sym::Matrix29<Scalar>,
+                                  sym::Matrix32<Scalar>,
+                                  sym::Matrix33<Scalar>,
+                                  sym::Matrix34<Scalar>,
+                                  sym::Matrix35<Scalar>,
+                                  sym::Matrix36<Scalar>,
+                                  sym::Matrix37<Scalar>,
+                                  sym::Matrix38<Scalar>,
+                                  sym::Matrix39<Scalar>,
+                                  sym::Matrix42<Scalar>,
+                                  sym::Matrix43<Scalar>,
+                                  sym::Matrix44<Scalar>,
+                                  sym::Matrix45<Scalar>,
+                                  sym::Matrix46<Scalar>,
+                                  sym::Matrix47<Scalar>,
+                                  sym::Matrix48<Scalar>,
+                                  sym::Matrix49<Scalar>,
+                                  sym::Matrix52<Scalar>,
+                                  sym::Matrix53<Scalar>,
+                                  sym::Matrix54<Scalar>,
+                                  sym::Matrix55<Scalar>,
+                                  sym::Matrix56<Scalar>,
+                                  sym::Matrix57<Scalar>,
+                                  sym::Matrix58<Scalar>,
+                                  sym::Matrix59<Scalar>,
+                                  sym::Matrix62<Scalar>,
+                                  sym::Matrix63<Scalar>,
+                                  sym::Matrix64<Scalar>,
+                                  sym::Matrix65<Scalar>,
+                                  sym::Matrix66<Scalar>,
+                                  sym::Matrix67<Scalar>,
+                                  sym::Matrix68<Scalar>,
+                                  sym::Matrix69<Scalar>,
+                                  sym::Matrix72<Scalar>,
+                                  sym::Matrix73<Scalar>,
+                                  sym::Matrix74<Scalar>,
+                                  sym::Matrix75<Scalar>,
+                                  sym::Matrix76<Scalar>,
+                                  sym::Matrix77<Scalar>,
+                                  sym::Matrix78<Scalar>,
+                                  sym::Matrix79<Scalar>,
+                                  sym::Matrix82<Scalar>,
+                                  sym::Matrix83<Scalar>,
+                                  sym::Matrix84<Scalar>,
+                                  sym::Matrix85<Scalar>,
+                                  sym::Matrix86<Scalar>,
+                                  sym::Matrix87<Scalar>,
+                                  sym::Matrix88<Scalar>,
+                                  sym::Matrix89<Scalar>,
+                                  sym::Matrix92<Scalar>,
+                                  sym::Matrix93<Scalar>,
+                                  sym::Matrix94<Scalar>,
+                                  sym::Matrix95<Scalar>,
+                                  sym::Matrix96<Scalar>,
+                                  sym::Matrix97<Scalar>,
+                                  sym::Matrix98<Scalar>,
+                                  sym::Matrix99<Scalar>,
+                                  sym::ATANCameraCal<Scalar>,
+                                  sym::DoubleSphereCameraCal<Scalar>,
+                                  sym::EquirectangularCameraCal<Scalar>,
+                                  sym::LinearCameraCal<Scalar>,
+                                  sym::PolynomialCameraCal<Scalar>,
+                                  sym::SphericalCameraCal<Scalar>>;
 
 /*
  * a la sym::Valuesd
  * a map of keys to values and the scalar data underlying it
  * values are stored in a flex_vector
  */
-template <typename Scalar>
+template<typename Scalar>
 struct values_t {
     using map_t = immer::map<imsym::key::key_t, index_entry_t>;
     using data_t = immer::flex_vector<Scalar>;
@@ -149,8 +222,9 @@ struct values_t {
 using valuesd_t = values_t<double>;
 using valuesf_t = values_t<float>;
 
-template <typename Scalar, typename T>
-inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& value) -> values_t<Scalar> {
+template<typename Scalar, typename T>
+inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& value)
+    -> values_t<Scalar> {
     // if data is in the map, the entry is overwritten
     // if the data is not, then we append data to the correct location in values.data
 
@@ -200,13 +274,13 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
     return values;
 };
 
-template <typename Scalar, typename T>
+template<typename Scalar, typename T>
 inline auto set(sym::Values<Scalar>& values, key::key_t key, const T& value) {
     values.Set(to(key), value);
     return values;
 };
 
-template <typename Scalar>
+template<typename Scalar>
 inline auto remove(values_t<Scalar> values, imsym::key::key_t key) -> values_t<Scalar> {
     values.map = move(values.map).erase(key);
     // leave data alone, it can be cleaned up manually later with the Cleanup() method
@@ -227,15 +301,17 @@ inline auto remove(values_t<Scalar> values, imsym::key::key_t key) -> values_t<S
  * only thing that needs to get updated after repacking.
  */
 
-template <typename Scalar>
-inline auto create_index(const values_t<Scalar>& values, const immer::vector<imsym::key::key_t>& keys) -> index_t {
+template<typename Scalar>
+inline auto create_index(const values_t<Scalar>& values,
+                         const immer::vector<imsym::key::key_t>& keys) -> index_t {
     index_t index{.storage_dim = 0, .tangent_dim = 0};
 
     for (const auto& key : keys) {
         const auto& val = values.map.find(key);
 
         if (val == nullptr) {
-            throw std::runtime_error(fmt::format("Tried to create index for key {} not in values", key));
+            throw std::runtime_error(
+                fmt::format("Tried to create index for key {} not in values", key));
         }
 
         const auto entry = *val;
@@ -250,13 +326,14 @@ inline auto create_index(const values_t<Scalar>& values, const immer::vector<ims
 // ----------------------------------------------------------------------------
 // Public Methods
 // ----------------------------------------------------------------------------
-template <typename Scalar>
+template<typename Scalar>
 auto has(const values_t<Scalar>& values, const key::key_t& key) -> bool {
     return values.map.count(key);
 }
 
-template <typename Scalar>
-auto find_letter_sub(const values_t<Scalar>& values, const key::key_t& key) -> std::optional<key::key_t> {
+template<typename Scalar>
+auto find_letter_sub(const values_t<Scalar>& values, const key::key_t& key)
+    -> std::optional<key::key_t> {
     for (const auto& [k, v] : values.map) {
         if (k.letter == key.letter and k.sub == key.sub) {
             return k;
@@ -267,18 +344,20 @@ auto find_letter_sub(const values_t<Scalar>& values, const key::key_t& key) -> s
 
 // need a storageOps that can read immer::vector
 
-template <typename Scalar, typename T>
+template<typename Scalar, typename T>
 auto at(const values_t<Scalar>& values, const index_entry_t& entry) -> T {
     // Check the type
     const sym::type_t type = sym::StorageOps<T>::TypeEnum();
 
     if (entry.type != type) {
-        throw std::runtime_error(fmt::format("Mismatched types; index entry is type {}, T is {}", entry.type, type));
+        throw std::runtime_error(
+            fmt::format("Mismatched types; index entry is type {}, T is {}", entry.type, type));
     }
 
     auto slice = values.data.drop(entry.offset).take(entry.storage_dim);
     if (slice.size() < entry.tangent_dim) {
-        throw std::runtime_error(fmt::format("not enough data {} {} to load data", slice.size(), entry.storage_dim));
+        throw std::runtime_error(
+            fmt::format("not enough data {} {} to load data", slice.size(), entry.storage_dim));
     }
 
     // slice off the bit of entry
@@ -287,39 +366,39 @@ auto at(const values_t<Scalar>& values, const index_entry_t& entry) -> T {
     return sym::StorageOps<T>::FromStorage(data.data());
 }
 
-template <typename Scalar, typename T>
+template<typename Scalar, typename T>
 auto at(const values_t<Scalar>& values, const key::key_t& key) -> T {
     auto entry = values.map.at(key);
     // TODO handle failure
     return at<T>(values, entry);
 }
 
-template <typename T>
+template<typename T>
 auto at(const valuesd_t& values, const index_entry_t& entry) -> T {
     return at<double, T>(values, entry);
 }
 
-template <typename T>
+template<typename T>
 auto at(const valuesf_t& values, const index_entry_t& entry) -> T {
     return at<float, T>(values, entry);
 }
 
-template <typename T>
+template<typename T>
 auto at(const valuesd_t& values, const key::key_t& key) -> T {
     return at<double, T>(values, key);
 }
 
-template <typename T>
+template<typename T>
 auto at(const valuesf_t& values, const key::key_t& key) -> T {
     return at<float, T>(values, key);
 }
 
-template <typename Scalar>
+template<typename Scalar>
 inline auto keys(const values_t<Scalar>& values) {
     return keys<Scalar>(values.map);
 };
 
-template <typename Scalar>
+template<typename Scalar>
 inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset = true) {
     // Sort the keys by offset so iterating through is saner and more memory friendly
     if (sort_by_offset) {
@@ -329,8 +408,9 @@ inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset
         for (const auto& [k, v] : map) {
             keys.push_back(k);
         }
-        std::sort(keys.begin(), keys.end(),
-                  [&](const auto& a, const auto& b) { return map.at(a).offset < map.at(b).offset; });
+        std::sort(keys.begin(), keys.end(), [&](const auto& a, const auto& b) {
+            return map.at(a).offset < map.at(b).offset;
+        });
         return common::immer::vector_from_std(keys);
     }
 
@@ -349,7 +429,7 @@ inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset
  * It will INVALIDATE all indices, offset increments, and pointers.
  * Re-create an index with CreateIndex().
  */
-template <typename Scalar>
+template<typename Scalar>
 inline auto cleanup(values_t<Scalar> values) -> std::pair<decltype(values), size_t> {
     // Copy the original data
     const auto data_copy = values.data;
@@ -366,7 +446,8 @@ inline auto cleanup(values_t<Scalar> values) -> std::pair<decltype(values), size
     int32_t new_offset = 0;
     for (index_entry_t entry : full_index.entries) {
         // copy data over
-        for (int i = entry.offset, j = new_offset; i < (entry.offset + entry.storage_dim); i++, j++) {
+        for (int i = entry.offset, j = new_offset; i < (entry.offset + entry.storage_dim);
+             i++, j++) {
             /*
         spdlog::debug(
             "setting entry {} from original entry {} from entry.offset {} storage_dim {}",
@@ -402,7 +483,7 @@ inline auto to(const sym::index_entry_t& other) -> values::index_entry_t {
 /*
  * perfect copy of a sym::Values data structure as an immutable imsym version
  */
-template <typename Scalar>
+template<typename Scalar>
 inline auto clone(const sym::Values<Scalar>& other) -> values_t<Scalar> {
     auto values = imsym::values::values_t<Scalar>{};
 
@@ -420,7 +501,7 @@ inline auto clone(const sym::Values<Scalar>& other) -> values_t<Scalar> {
 /*
  * perfect copy of an imsym data structure as a sym::Values
  */
-template <typename Scalar>
+template<typename Scalar>
 inline auto clone(const values_t<Scalar>& other) -> sym::Values<Scalar> {
     auto values = sym::Values<Scalar>{};
 
@@ -725,7 +806,7 @@ inline auto clone(const values_t<Scalar>& other) -> sym::Values<Scalar> {
     return values;
 }
 
-template <typename Scalar>
+template<typename Scalar>
 inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b) -> values_t<Scalar> {
     auto out = a;
     for (const auto& [k, v] : b.map) {
@@ -742,8 +823,9 @@ inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b) -> value
     return out;
 }
 
-template <typename Scalar>
-inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b, const values_t<Scalar>& c) -> values_t<Scalar> {
+template<typename Scalar>
+inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b, const values_t<Scalar>& c)
+    -> values_t<Scalar> {
     return merge(merge(a, b), c);
 }
 
@@ -753,8 +835,10 @@ inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b, const va
  *
  * `index_a` MUST be valid for this object; `index_b` MUST be valid for other object.
  */
-template <typename Scalar>
-inline values_t<Scalar> update(const index_t& index_a, const index_t& index_b, const values_t<Scalar>& values_a,
+template<typename Scalar>
+inline values_t<Scalar> update(const index_t& index_a,
+                               const index_t& index_b,
+                               const values_t<Scalar>& values_a,
                                const values_t<Scalar>& values_b) {
     auto values_out = values_a;
     assert(index_a.entries.size() == index_b.entries.size());
@@ -779,8 +863,9 @@ inline values_t<Scalar> update(const index_t& index_a, const index_t& index_b, c
  * this avoids having to know about type info
  * key doesn't exist on the a side
  */
-template <typename Scalar>
-inline values_t<Scalar> copy_data_for_new_key(const values_t<Scalar>& values_a, const values_t<Scalar>& values_b,
+template<typename Scalar>
+inline values_t<Scalar> copy_data_for_new_key(const values_t<Scalar>& values_a,
+                                              const values_t<Scalar>& values_b,
                                               const imsym::key::key_t& key) {
     auto values_out = values_a;
     auto entry_b = values_b.map.at(key);
@@ -797,8 +882,9 @@ inline values_t<Scalar> copy_data_for_new_key(const values_t<Scalar>& values_a, 
 // data has to be the same size for both sides
 // we just insert the data directly over the old data
 // key has to exist on both sides
-template <typename Scalar>
-inline values_t<Scalar> copy_data_for_existing_key(const values_t<Scalar>& values_a, const values_t<Scalar>& values_b,
+template<typename Scalar>
+inline values_t<Scalar> copy_data_for_existing_key(const values_t<Scalar>& values_a,
+                                                   const values_t<Scalar>& values_b,
                                                    const imsym::key::key_t& key) {
     auto values_out = values_a;
 
@@ -822,8 +908,9 @@ inline values_t<Scalar> copy_data_for_existing_key(const values_t<Scalar>& value
  * if key exists in other
  * - copy the data from other
  */
-template <typename Scalar>
-inline values_t<Scalar> update(const values_t<Scalar>& values_a, const values_t<Scalar>& values_b, const key_t& key) {
+template<typename Scalar>
+inline values_t<Scalar>
+    update(const values_t<Scalar>& values_a, const values_t<Scalar>& values_b, const key_t& key) {
     auto values_out = values_a;
 
     const auto& entry_a = values_a.map.get(key);
@@ -845,7 +932,7 @@ inline values_t<Scalar> update(const values_t<Scalar>& values_a, const values_t<
 /**
  * extract values from the given keys into a new values
  */
-template <typename Scalar>
+template<typename Scalar>
 inline values_t<Scalar> extract(const values_t<Scalar>& other, const index_t& index) {
     auto values = values_t<Scalar>{};
 
@@ -861,52 +948,74 @@ inline values_t<Scalar> extract(const values_t<Scalar>& other, const index_t& in
     return values;
 }
 
-template <typename Scalar>
-values_t<Scalar>::values_t(std::initializer_list<std::tuple<imsym::key::key_t, AllowedTypes<Scalar>>> init_list) {
+template<typename Scalar>
+values_t<Scalar>::values_t(
+    std::initializer_list<std::tuple<imsym::key::key_t, AllowedTypes<Scalar>>> init_list) {
     values_t<Scalar> me = *this;
     for (const auto& [k, v] : init_list) {
-        me = lager::match(v)([me = move(me), k = k](auto a) { return set(move(me), k, a); });
+        me = lager::match(v)([me = move(me), k = k](auto a) {
+            return set(move(me), k, a);
+        });
     }
     map = move(me.map);
     data = move(me.data);
 };
 
-}  // namespace imsym::values
+}   // namespace imsym::values
 
-template <>
+template<>
 struct fmt::formatter<imsym::values::index_entry_t> {
-    static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
 
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(const imsym::values::index_entry_t& i, FormatContext& ctx) {
-        return fmt::format_to(ctx.out(), "index_entry_t: key: {} offset: {} storage_dim: {} tangent_dim: {} type: {}",
-                              i.key, i.offset, i.storage_dim, i.tangent_dim, i.type);
+        return fmt::format_to(
+            ctx.out(),
+            "index_entry_t: key: {} offset: {} storage_dim: {} tangent_dim: {} type: {}",
+            i.key,
+            i.offset,
+            i.storage_dim,
+            i.tangent_dim,
+            i.type);
     }
 };
 
-template <>
+template<>
 struct fmt::formatter<imsym::values::index_t> {
-    static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
 
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(const imsym::values::index_t& i, FormatContext& ctx) {
-        return fmt::format_to(ctx.out(), "index_t: {} storage_dim: {} tangent_dim: {} entries: {}", i.storage_dim,
-                              i.tangent_dim, i.entries);
+        return fmt::format_to(ctx.out(),
+                              "index_t: {} storage_dim: {} tangent_dim: {} entries: {}",
+                              i.storage_dim,
+                              i.tangent_dim,
+                              i.entries);
     }
 };
 
-template <>
+template<>
 struct fmt::formatter<imsym::values::valuesd_t> {
-    static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
 
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(const imsym::values::valuesd_t& values, FormatContext& ctx) {
         fmt::format_to(ctx.out(), "values\n");
 
-        const auto full_index = create_index(values, keys<double>(values.map, true));  // sort by offset
-                                                                                       //
+        const auto full_index =
+            create_index(values, keys<double>(values.map, true));   // sort by offset
+                                                                    //
         for (const auto& entry : full_index.entries) {
-            fmt::format_to(ctx.out(), "\t{} {}\n", entry, values.data.drop(entry.offset).take(entry.storage_dim));
+            fmt::format_to(ctx.out(),
+                           "\t{} {}\n",
+                           entry,
+                           values.data.drop(entry.offset).take(entry.storage_dim));
         }
 
         return fmt::format_to(ctx.out(), "done");
@@ -915,18 +1024,18 @@ struct fmt::formatter<imsym::values::valuesd_t> {
 
 // TODO move this to a sym archive file?
 namespace cereal {
-template <class Archive>
+template<class Archive>
 void save(Archive& archive, const sym::type_t& m) {
     archive(static_cast<int32_t>(m.value));
 }
 
-template <class Archive>
+template<class Archive>
 void load(Archive& archive, sym::type_t& m) {
     int32_t value;
     archive(value);
     m.value = static_cast<sym::type_t::option_t>(value);
 }
-}  // namespace cereal
+}   // namespace cereal
 
 COMMON_STRUCT(imsym::values, index_entry_t, key, type, offset, storage_dim, tangent_dim);
 
@@ -973,8 +1082,8 @@ inline auto contents_equal(const immer::map<imsym::key::key_t, index_entry_t>& a
  * this is different than object equality offered by operator == on the map which checks for
  * identity()
  */
-template <typename Scalar>
+template<typename Scalar>
 inline auto contents_equal(const values_t<Scalar>& a, const values_t<Scalar>& b) -> bool {
     return contents_equal(a.map, b.map) and (a.data == b.data);
 }
-}  // namespace imsym::values
+}   // namespace imsym::values
