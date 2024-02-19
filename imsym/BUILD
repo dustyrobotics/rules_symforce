@@ -23,5 +23,6 @@ cc_library(
         "@immer",
         "@symforce",
         "@spdlog",
+        "@fmt",
     ],
 )

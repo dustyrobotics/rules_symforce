@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fmt/ranges.h>
 //
 #include <immer/flex_vector.hpp>
 #include <immer/map.hpp>
@@ -14,6 +13,38 @@
 #include "imsym/values.hh"
 
 #include <fmt/core.h>
+
+template<>
+struct fmt::formatter<immer::flex_vector<float>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<float>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::flex_vector<double>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<double>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
 
 template<>
 struct fmt::formatter<imsym::key::key_t> {
