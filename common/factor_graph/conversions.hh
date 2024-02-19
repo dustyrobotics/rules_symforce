@@ -1,8 +1,9 @@
 #pragma once
-#include <Eigen/Core>
 #include "common/factor_graph/types.hh"
 #include "external/symforce/symforce/opt/key.h"
-#include "imsym/values.hh"
+#include "imsym/imsym.hh"
+
+#include <Eigen/Core>
 
 namespace factor_graph {
 inline auto to_dense_matrix(const Eigen::MatrixXd& m) -> factor_graph::dense_matrix_t {
@@ -35,4 +36,4 @@ inline auto to_imsym(std::unordered_map<sym::Key, Eigen::MatrixXd> covariances) 
     return out;
 };
 
-}  // namespace factor_graph
+}   // namespace factor_graph

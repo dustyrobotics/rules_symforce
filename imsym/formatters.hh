@@ -84,12 +84,12 @@ struct fmt::formatter<imsym::values::valuesd_t> {
                                                                     //
         for (const auto& entry : full_index.entries) {
             fmt::format_to(ctx.out(),
-                           "\t{} {}\n",
+                           "\n\t{} {}",
                            entry,
                            values.data.drop(entry.offset).take(entry.storage_dim));
         }
 
-        return fmt::format_to(ctx.out(), "done");
+        return ctx.out();
     }
 };
 

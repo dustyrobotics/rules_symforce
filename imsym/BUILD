@@ -18,10 +18,10 @@ cc_library(
     deps = [
         "@automaton_common//common",
         "@automaton_common//common/immer",
+        "@automaton_common//common/variant",
         "@automaton_common//common:cereal",
         "@immer",
         "@symforce",
         "@spdlog",
-        "@lager", # for lager/utils.cpp
     ],
 )

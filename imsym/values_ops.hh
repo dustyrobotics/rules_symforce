@@ -10,6 +10,7 @@
 #include "common/cereal/immer_vector.hh"
 #include "common/immer/utils.hh"
 #include "common/struct.hh"
+#include "common/variant/match.hh"
 //
 #include "imsym/values.hh"
 
@@ -17,7 +18,6 @@
 #include <immer/flex_vector.hpp>
 #include <immer/map.hpp>
 #include <immer/vector.hpp>
-#include <lager/util.hpp>
 
 #include <vector>
 
@@ -75,6 +75,19 @@ inline auto create_index(const values_t<Scalar>& values,
 template<typename Scalar>
 auto has(const values_t<Scalar>& values, const key::key_t& key) -> bool {
     return values.map.count(key);
+}
+
+template<typename Scalar>
+auto keys_with_letter(const values_t<Scalar>& values, const key::key_t::letter_t& letter)
+    -> immer::flex_vector<key::key_t> {
+    immer::flex_vector<key::key_t> out{};
+
+    for (const auto& [k, v] : values.map) {
+        if (k.letter == letter) {
+            out = move(out).push_back(k);
+        }
+    }
+    return out;
 }
 
 template<typename Scalar>
@@ -167,6 +180,28 @@ inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset
     }
     return keys;
 };
+
+template<typename Scalar, typename T>
+auto at(const values_t<Scalar>& values, const immer::flex_vector<key::key_t>& keys)
+    -> immer::flex_vector<T> {
+    auto out = immer::flex_vector<T>{};
+    for (const auto& key : keys) {
+        out = move(out).push_back(at<T>(values, key));
+    }
+    return out;
+}
+
+template<typename T>
+auto at(const valuesf_t& values, const immer::flex_vector<key::key_t>& keys)
+    -> immer::flex_vector<T> {
+    return at<float, T>(values, keys);
+}
+
+template<typename T>
+auto at(const valuesd_t& values, const immer::flex_vector<key::key_t>& keys)
+    -> immer::flex_vector<T> {
+    return at<double, T>(values, keys);
+}
 
 /**
  * Repack the data array to get rid of empty space from removed keys. If regularly removing
@@ -353,7 +388,7 @@ values_t<Scalar>::values_t(
     std::initializer_list<std::tuple<imsym::key::key_t, AllowedTypes<Scalar>>> init_list) {
     values_t<Scalar> me = *this;
     for (const auto& [k, v] : init_list) {
-        me = lager::match(v)([me = move(me), k = k](auto a) {
+        me = mmm::match(v)([me = move(me), k = k](auto a) {
             return set(move(me), k, a);
         });
     }
