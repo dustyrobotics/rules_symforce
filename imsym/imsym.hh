@@ -5,9 +5,12 @@
  */
 
 #pragma once
-
 #include "imsym/key.hh"
 #include "imsym/values.hh"
+#include "imsym/values_ext_ops.hh"
+#include "imsym/values_ops.hh"
+//
+#include "imsym/formatters.hh"
 
 namespace imsym {
 //

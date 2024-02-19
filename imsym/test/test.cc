@@ -4,10 +4,13 @@
  * Written by Asa Hammond <asa@automaton.is>, 2021
  */
 #define CATCH_CONFIG_MAIN
-#include "external/spdlog/include/spdlog/spdlog.h"
 #include "imsym/imsym.hh"
+//
 
 #include <catch2/catch_all.hpp>
+// first spdlog include wins
+#include <spdlog/spdlog.h>
+//
 #include <sym/factors/between_factor_pose3.h>
 #include <sym/factors/between_factor_rot3.h>
 #include <sym/factors/prior_factor_pose3.h>

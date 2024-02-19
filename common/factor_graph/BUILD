@@ -22,6 +22,8 @@ cc_library(
         "@automaton_common//common",
         "@automaton_common//motion",
         "@automaton_common//common:cereal",
+        "//imsym",
+        "@lager",
     ],
 )
 

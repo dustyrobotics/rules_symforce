@@ -7,6 +7,7 @@ cc_test(
     linkstatic = True,
     deps = [
         "//imsym",
+        "@spdlog",
         "@catch2//:catch2_main",
     ],
 )

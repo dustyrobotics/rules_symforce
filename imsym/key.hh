@@ -6,16 +6,6 @@
 #pragma once
 #include "common/struct.hh"
 
-#include <fmt/core.h>
-
-#include <variant>
-
-/*
- * immutable variant of symforce structures for use in logging and playback
- * they are hashable and convertable to their underlying symforce type to be used in symforce
- * structures. It may be possible to use these as the underlying types in sym::Values in an
- * optimizer of the future by using c++ Concepts.
- */
 namespace imsym::key {
 
 /*
@@ -32,47 +22,8 @@ struct key_t {
     char letter = kInvalidLetter;
     subscript_t sub = kInvalidSub;
     superscript_t super = kInvalidSuper;
-
-    /*
-    key_t() {
-    }
-
-    key_t(letter_t _letter) {
-        letter = _letter;
-    }
-
-    key_t(letter_t _letter, subscript_t _sub) {
-        letter = _letter;
-        sub = _sub;
-    }
-
-    key_t(letter_t _letter, subscript_t _sub, superscript_t _super) {
-        letter = _letter;
-        sub = _sub;
-        super = _super;
-    }
-    */
 };
 
 }   // namespace imsym::key
-
-template<>
-struct fmt::formatter<imsym::key::key_t> {
-    static constexpr auto parse(format_parse_context& ctx) {
-        return ctx.begin();
-    }
-
-    template<typename FormatContext>
-    auto format(const imsym::key::key_t& k, FormatContext& ctx) {
-        using imsym::key::key_t;
-        if (k.sub == key_t::kInvalidSub and k.super == key_t::kInvalidSuper) {
-            return fmt::format_to(ctx.out(), "{}", k.letter);
-        }
-        if (k.sub != key_t::kInvalidSub and k.super == key_t::kInvalidSuper) {
-            return fmt::format_to(ctx.out(), "{}(t:{}) ", k.letter, k.sub);
-        }
-        return fmt::format_to(ctx.out(), "{} sub {} super {}", k.letter, k.sub, k.super);
-    }
-};
 
 COMMON_STRUCT_HASH(imsym::key, key_t, letter, sub, super);

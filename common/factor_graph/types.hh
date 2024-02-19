@@ -8,16 +8,18 @@
 #include "motion/types.hh"
 
 #include <immer/map.hpp>
+#include <immer/vector.hpp>
 
 #include <optional>
 //
 #include "common/cereal/immer_map.hh"
 #include "common/cereal/json.hh"
 #include "common/cereal/optional_nvp.hh"
+#include "common/struct.hh"
 
 #include <cereal/types/optional.hpp>
+#include <lager/extra/cereal/immer_map.hpp>
 #include <lager/extra/cereal/immer_vector.hpp>
-#include "common/struct.hh"
 
 namespace factor_graph {
 
@@ -68,8 +70,8 @@ struct factor_graph_stats_t {
     int16_t convergence_iterations = 0;
     float final_error;
 
-    timestamp_t duration;         // how long it took to solve
-    timestamp_t last_state_time;  // the time of the last state we solved
+    timestamp_t duration;          // how long it took to solve
+    timestamp_t last_state_time;   // the time of the last state we solved
 
     std::optional<detailed_internals_t> internals;
 };
@@ -79,7 +81,7 @@ struct solve_result_t {
     factor_graph::factor_graph_stats_t solve_stats;
     size_t solve_iterations = 0;
 };
-}  // namespace factor_graph
+}   // namespace factor_graph
 
 COMMON_STRUCT_HASH(factor_graph, coords_t, row, col);
 
@@ -88,22 +90,23 @@ COMMON_STRUCT(factor_graph, dense_matrix_t, size, data);
 
 COMMON_STRUCT_HASH(factor_graph, offset_t, offset, dim);
 
-COMMON_STRUCT(factor_graph,            //
-              detailed_internals_t,    //
-              covariances_by_key,      //
-              linear_solver_ordering,  //
-              residuals,               //
-              jacobian,                //
-              factor_residual_offsets  //
+COMMON_STRUCT(factor_graph,             //
+              detailed_internals_t,     //
+              covariances_by_key,       //
+              linear_solver_ordering,   //
+              residuals,                //
+              jacobian,                 //
+              factor_residual_offsets   //
 );
 
-COMMON_STRUCT(factor_graph, factor_graph_stats_t,
-              num_factors,             //
-              num_values,              //
-              convergence_iterations,  //
-              final_error,             //
-              duration,                //
-              last_state_time,         //
+COMMON_STRUCT(factor_graph,
+              factor_graph_stats_t,
+              num_factors,              //
+              num_values,               //
+              convergence_iterations,   //
+              final_error,              //
+              duration,                 //
+              last_state_time,          //
               internals);
 
 COMMON_STRUCT(factor_graph, solve_result_t, state, solve_stats, solve_iterations);
