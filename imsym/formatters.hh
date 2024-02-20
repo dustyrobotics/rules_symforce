@@ -14,6 +14,10 @@
 
 #include <fmt/core.h>
 
+// explicitly define the formatters for the imsym uses of flex vector
+// when this is generalized, fmt/ranges kicks in. and blows up
+// symforce pulls in fmt/ranges in a few places, so they compete.
+// really should limit symforces use of fmt/ranges
 template<>
 struct fmt::formatter<immer::flex_vector<float>> {
     static constexpr auto parse(format_parse_context& ctx) {
