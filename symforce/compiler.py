@@ -24,43 +24,54 @@ def cli():
 
 @cli.command()
 @click.option('--input_path',  help="input symforce python file")
-@click.option('--function',  help="which function should we compile")
+@click.option('--function',  type=str, help = "which function name should we compile")
+@click.option('--function_is_generator', is_flag=True, help="is the function a function generator?")
 @click.option('--arguments',  multiple=True, help="which arguments of the function should we linearize around")
 @click.option('--output_names',  multiple=True, help="output the names of the arguments")
-@click.option('--output_residual',  help="output path for residual.h file")
-@click.option('--output_factor', default=None, help="output path for factor.h file")
-def compile(input_path, function, arguments, output_names, output_residual, output_factor):
+@click.option('--output_function_path', help="output path for function (eg residual.h ) file")
+@click.option('--output_factor_path', default = None, help="output path for factor.h file")
+def compile(input_path, function, function_is_generator, arguments, output_names, output_function_path, output_factor_path):
     import sympy
 
-    # TODO sanitize this input better
-    # using globals to evaluate the imports in the file
+    print("Starting symforce codegen from {}", input_path)
+    # read the python file from disk and execute it so the function is in the global namespace
     exec(open(input_path,"r").read(), globals())
 
     data = None
 
+    if(function_is_generator):
+        print("function is generator, calling it!!!!!!!!!!!!!!!!!!!!")
+        #function = function()
+        globals()[function] = globals()[function]()
+
     if(output_names):
         data = codegen.Codegen.function(globals()[function], 
                                     config=codegen.CppConfig(),
+                                    name = function,
                                     output_names = output_names
                                     )
     else:
         data = codegen.Codegen.function(globals()[function], 
                                     config=codegen.CppConfig(),
+                                    name = function,
                                     )
 
     # generate the residual 
-    metadata_residual = data.generate_function()
-    open(output_residual,"w").write(open(metadata_residual.generated_files[0]).read())
+    generated_function = data.generate_function()
+    open(output_function_path,"w").write(open(generated_function.generated_files[0]).read())
+    print("function: {}".format(function))
+    print("to {}".format(function, output_function_path))
 
-    if output_factor:
+    if output_factor_path:
+        # also generate the linearization function (eg the factor)
+        # and write it to disk
         codegen_linearization = data.with_linearization(
             which_args = arguments
         )
 
         metadata_factor = codegen_linearization.generate_function()
-        open(output_factor,"w").write(open(metadata_factor.generated_files[0]).read())
-
-    print("Compiled symforce codegen {} to {} and {}".format(input_path, output_residual, output_factor))
+        open(output_factor_path,"w").write(open(metadata_factor.generated_files[0]).read())
+        print("factor:   {} to {}".format(function, output_factor_path))
 
 if __name__ == "__main__":
     cli()
