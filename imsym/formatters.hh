@@ -51,6 +51,70 @@ struct fmt::formatter<immer::flex_vector<double>> {
 };
 
 template<>
+struct fmt::formatter<immer::flex_vector<size_t>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<size_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::flex_vector<long>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<long>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::flex_vector<int>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<int>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::flex_vector<std::string>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<std::string>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
 struct fmt::formatter<imsym::key::key_t> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();

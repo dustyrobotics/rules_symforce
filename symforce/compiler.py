@@ -23,7 +23,7 @@ def cli():
     pass
 
 @cli.command()
-@click.option('--basename',  type=str, help = "base name for residual function, and factor")
+@click.option('--basename',  type=str, required=True, help = "base name for residual function, and factor")
 @click.option('--input_path',  help="input symforce python file")
 @click.option('--function_name',  type=str, help = "which function name should we compile")
 @click.option('--function_is_generator', is_flag=True, help="is the function a function generator?")

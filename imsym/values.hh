@@ -176,6 +176,7 @@ struct values_t {
     values_t(std::initializer_list<std::tuple<imsym::key::key_t, AllowedTypes<Scalar>>> init_list);
 
     values_t(){};
+
     constexpr size_t num_entries() const {
         return map.size();
     };

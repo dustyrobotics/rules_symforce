@@ -232,6 +232,8 @@ inline auto cleanup(values_t<Scalar> values) -> std::pair<decltype(values), size
              i++, j++) {
             values.data = move(values.data).set(j, data_copy.at(i));
         }
+        // TODO, take advantage of the fact that we are using a flex vector. we can just drop the
+        // unused / deleted values in data
 
         entry.offset = new_offset;
         values.map = move(values.map).set(entry.key, entry);
