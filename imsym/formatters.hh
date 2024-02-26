@@ -192,3 +192,51 @@ struct fmt::formatter<imsym::values::valuesd_t> {
     }
 };
 
+template<>
+struct fmt::formatter<immer::flex_vector<imsym::key::key_t>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<imsym::key::key_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<const std::optional<long>&> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const std::optional<long>& v, FormatContext& ctx) {
+        if (v) {
+            return fmt::format_to(ctx.out(), v.value());
+        } else {
+            return fmt::format_to(ctx.out(), "{}");
+        }
+    }
+};
+
+template<typename T>
+struct fmt::formatter<const std::optional<T>&> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext, typename V, typename = std::enable_if_t<std::is_integral_v<T>>>
+    auto format(const std::optional<V>& v, FormatContext& ctx) {
+        if (v) {
+            return fmt::format_to(ctx.out(), v.value());
+        } else {
+            return fmt::format_to(ctx.out(), "{}");
+        }
+    }
+};
+

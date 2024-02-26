@@ -1,22 +1,30 @@
-import sys
 
 import click
-import symforce
 
+import symforce
 symforce.set_epsilon_to_symbol()
 # required for codegenning out cpp code!!!
 symforce.set_symbolic_api("symengine")
 symforce.set_log_level("warning")
-
-import sympy
-
 from symforce import codegen
-from symforce.codegen import codegen_util
-from symforce import geo
-from symforce import ops
-import symforce.symbolic as sf
-from symforce import typing as T
-from symforce.values import Values
+
+
+def write_function_to_disk(data, path):
+    # generate the residual 
+    generated_function = data.generate_function()
+    open(path, "w").write(open(generated_function.generated_files[0]).read())
+
+    
+def write_linearization_to_disk(codegen_linearization, path):
+    metadata_factor = codegen_linearization.generate_function()
+    open(path, "w").write(open(metadata_factor.generated_files[0]).read())
+
+
+def read_python_source(input_path, function_name):
+    # read the python file from disk and execute it so the python code we want is in the global namespace
+    exec(open(input_path,"r").read(), globals())
+    # we generate from a single function, so we need to get it from the global namespace
+    return globals()[function_name]
 
 @click.group()
 def cli():
@@ -24,67 +32,103 @@ def cli():
 
 @cli.command()
 @click.option('--basename',  type=str, required=True, help = "base name for residual function, and factor")
-@click.option('--input_path',  help="input symforce python file")
 @click.option('--function_name',  type=str, help = "which function name should we compile")
 @click.option('--function_is_generator', is_flag=True, help="is the function a function generator?")
 @click.option('--arguments',  multiple=True, help="which arguments of the function should we linearize around")
 @click.option('--output_names',  multiple=True, help="output the names of the arguments")
-@click.option('--output_function_path', help="output path for function (eg residual.h ) file")
-@click.option('--output_factor_path', default = None, help="output path for factor.h file")
-def compile(basename, input_path, function_name, function_is_generator, arguments, output_names, output_function_path, output_factor_path):
-    import sympy
+@click.option('--python_src',  help="input symforce python file")
+@click.option('--output_residual_cpp', help="output path for residual function  (eg basename_residual.h ) ")
+@click.option('--output_factor_cpp', default = None, help="output path for factor.h file")
+def generatefactor(basename, 
+                    python_src, 
+                    function_name, 
+                    function_is_generator, 
+                    arguments, 
+                    output_names, 
+                    output_residual_cpp, 
+                    output_factor_cpp):
+    print("Starting symforce factor codegen from {}".format(python_src))
 
-    print("Starting symforce codegen from {}".format(input_path))
-    # read the python file from disk and execute it so the function is in the global namespace
-    exec(open(input_path,"r").read(), globals())
-    # get the function from the global namespace
-    FUNC = globals()[function_name]
-    
-    data = None
+    FUNCTION = read_python_source(python_src, function_name)
+
     input_types = None
-
+    if len(output_names) == 0:
+        output_names = None 
+    # read the input types in a workaround to read the annotations
     if(function_is_generator):
-        input_types, FUNC = FUNC()
+        input_types, FUNCTION = FUNCTION()
 
-    if output_factor_path:
-        # if this is a factor the base function is FooFactorResidual
-        # do that by appending snake case
-        basename = basename + "_residual"
+    # FooFactorResidual
+    # factors generate two files, the residual and the factor
+    # factors have BaseNameResidual and BaseNameFactor as the names
+    # do that by appending snake case to the 
+    name = basename + "_residual"
 
-    if(output_names):
-        data = codegen.Codegen.function(FUNC, 
+
+    data = codegen.Codegen.function(FUNCTION, 
                                     config=codegen.CppConfig(),
-                                    name = basename,
+                                    name = name,
                                     input_types = input_types,
                                     output_names = output_names
-                                    )
-    else:
-        data = codegen.Codegen.function(FUNC, 
+                            )    
+
+    write_function_to_disk(data, output_residual_cpp)
+    print("function: {}".format( output_residual_cpp))
+
+    print("linearization arguments:", arguments)
+    # also generate the linearization function (eg the factor)
+    # it is linearized around "which_args"
+    codegen_linearization = data.with_linearization(
+            which_args = arguments
+    )
+
+    write_linearization_to_disk(codegen_linearization, output_factor_cpp)
+    print("factor:   {}".format(output_factor_cpp))
+
+
+
+@cli.command()
+@click.option('--basename',  type=str, required=True, help = "base name for the generated function(s)")
+@click.option('--python_src',  help="input symforce python file to be evaluated")
+@click.option('--function_name',  type=str, help = "which function name should we compile")
+@click.option('--return_key',  type=str, default=None, help = "return key object for function, eg Pose3")
+@click.option('--output_names',  multiple=True, type=str, default=None, help="the names of the output args")
+@click.option('--output_cpp', help="output path for function (eg residual.h ) file")
+def rawcodegen(basename, python_src, function_name, return_key, output_names, output_cpp):
+    print("Starting symforce codegen from {}".format(python_src))
+    
+    FUNCTION = read_python_source(python_src, function_name)
+
+
+    if output_names == ():
+        output_names = None 
+    # try and read the input types from the function interface
+    input_types = None
+
+    print("the return key for this is:", return_key)
+    data = codegen.Codegen.function(FUNCTION, 
                                     config=codegen.CppConfig(),
                                     name = basename,
                                     input_types = input_types,
+                                    output_names = output_names,
+                                    return_key = return_key,
                                     )
+#        cls,
+# func: T.Callable,
+# config: codegen_config.CodegenConfig,
+# name: T.Optional[str] = None,
+# input_types: T.Sequence[T.ElementOrType] = None,
+# output_names: T.Sequence[str] = None,
+# return_key: str = None,
+# sparse_matrices: T.Sequence[str] = None,
+# docstring: str = None,
 
-    # generate the residual 
-    generated_function = data.generate_function()
-    open(output_function_path,"w").write(open(generated_function.generated_files[0]).read())
+
+
     print("function: {} -> codegen with base name: {}".format(function_name, basename))
+    write_function_to_disk(data, output_cpp)
+    print("function: {}".format( output_cpp))
 
-    if output_factor_path:
-        #basename_residual -> basename_factor when we output a factor
-        # also generate the linearization function (eg the factor)
-        # and write it to disk
-        codegen_linearization = data.with_linearization(
-            which_args = arguments
-        )
-
-        metadata_factor = codegen_linearization.generate_function()
-        open(output_factor_path,"w").write(open(metadata_factor.generated_files[0]).read())
-        print("function: {}".format(output_function_path))
-        print("factor:   {}".format(output_factor_path))
-    else:
-        # this mode is just building a codegen py -> cc function. this is the path the residual function takes above
-        print("function: {}".format(output_function_path))
 
 if __name__ == "__main__":
     cli()
