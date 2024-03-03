@@ -1,0 +1,33 @@
+{# ----------------------------------------------------------------------------
+ # SymForce - Copyright 2022, Skydio, Inc.
+ # This source code is under the Apache 2.0 license found in the LICENSE file.
+ # ---------------------------------------------------------------------------- #}
+
+  {# Handwritten methods for NavState #}
+  template <typename Derived>
+  NavState(const Rot3<Scalar>& rotation, const Eigen::MatrixBase<Derived>& position, const Eigen::MatrixBase<Derived>& velocity) {
+    static_assert(Derived::RowsAtCompileTime == 3, "Position must be a 3x1 vector");
+    static_assert(Derived::ColsAtCompileTime == 1, "Position must be a 3x1 vector");
+    static_assert(Derived::ColsAtCompileTime == 1, "Velocity must be a 3x1 vector");
+    data_.template head<4>() = rotation.Data();
+    data_[5] = position[0];
+    data_[6] = position[1];
+    data_[7] = position[2];
+    data_.template tail<3>() = velocity;
+  }
+
+  // Generate a random element, with normally distributed position
+  template <typename Generator>
+  static NavState Random(Generator& gen) {
+    // This cannot be combined into NavState(Rot3::Random(gen), sym::StorageOps::Random(gen)),
+    // because the standard does not guarantee evaluation order of arguments,
+    // meaning that we would get different results on different compilers.
+    const auto rot3 = Rot3<Scalar>::Random(gen);
+    const auto t_vec3 = sym::StorageOps<Vector3>::Random(gen);
+    const auto v_vec3 = sym::StorageOps<Vector3>::Random(gen);
+    return NavState(rot3, t_vec3, v_vec3);
+  }
+
+  Eigen::Transform<Scalar, 3, Eigen::TransformTraits::Isometry> ToTransform() const {
+    return Eigen::Transform<Scalar, 3, Eigen::TransformTraits::Isometry>{ToHomogenousMatrix()};
+  }

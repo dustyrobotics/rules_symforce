@@ -12,6 +12,3 @@
 //
 #include "imsym/formatters.hh"
 
-namespace imsym {
-//
-}

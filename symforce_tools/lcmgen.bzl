@@ -32,7 +32,7 @@ _lcmgen = rule(
         "_compiler": attr.label(
             executable = True,
             cfg = "exec",
-            default = Label("@rules_symforce//symforce:lcmgen"),
+            default = Label("@rules_symforce//symforce_tools:lcmgen"),
         ),
         "outs": attr.output_list(),
     },
@@ -78,13 +78,17 @@ def cc_lcm_library(name, srcs, deps = []):
             src = lcmfile,
             outs = all_outputs[lcmfile],
         )
+
     all_hdrs = []
+
     for v in all_outputs.values():
         all_hdrs.extend(v)
+
+    # make a cc library out of the resulting lcm generated types
     native.cc_library(
         name = name,
         hdrs = all_hdrs,
-        deps = ["@symforce//:skymarshal_core"] + deps,
+        deps = ["@symforce_repo//:skymarshal_core"] + deps,
         includes = [".", "lcmtypes"],
         visibility = ["//visibility:public"],
     )

@@ -21,7 +21,7 @@ cc_library(
         "@automaton_common//common/variant",
         "@automaton_common//common:cereal",
         "@immer",
-        "@symforce",
+        "@symforce_repo//:symforce",
         "@spdlog",
         "@fmt",
     ],

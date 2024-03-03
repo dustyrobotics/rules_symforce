@@ -1,0 +1,277 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@symforce_requirements//:requirements.bzl", "requirement")
+load("@rules_symforce//symforce_tools:lcmgen.bzl", "cc_lcm_library")
+
+load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg")
+
+
+COPTS = ["-std=c++17"]
+
+cc_library(
+    name = "skymarshal_core",
+    hdrs = [
+       "third_party/skymarshal/include/lcm/lcm_coretypes.h",
+      ],
+    defines=["SKYMARSHAL_PRINTING_ENABLED"],
+    includes=["third_party/skymarshal/include"],
+    copts=COPTS,
+)
+
+cc_library(
+    name = "eigen_lcm",
+    hdrs = glob([
+       "third_party/eigen_lcm/lcmtypes/eigen_lcm_lcm/cpp/lcmtypes/eigen_lcm/*.hpp"
+      ]),
+    includes=["third_party/eigen_lcm/lcmtypes/eigen_lcm_lcm/cpp/"],
+    copts=["-std=c++17"],
+)
+
+cc_library(
+    name = "symforce",
+    srcs = glob([
+        "symforce/**/*.h",
+        "symforce/**/*.hpp",
+        "symforce/**/*.tcc",
+        "symforce/**/*.cc",
+    ],   exclude=[
+          "symforce/opt/**",
+          "symforce/pybind/**",
+          "symforce/benchmarks/**",
+          "symforce/examples/**",
+          "symforce/codegen/backends/**",
+     ]),
+    includes = ["."],
+    deps=[
+        "@spdlog",
+        "@eigen",
+        ":opt",
+        ":gen",
+    ],
+    copts=COPTS,
+)
+
+cc_lcm_library(
+        name="lcmtypes",
+        srcs = [
+            "lcmtypes/symforce_types.lcm",
+            "lcmtypes/symforce.lcm",
+        ],
+)
+
+# generate the code for the types
+# TODO layer in other backends
+# these are overridden by rules_symforce versions
+#py_library(
+#    name = "backend_configs",
+#    srcs = glob([
+#        "symforce/codegen/backends/*/*.py",
+#    ]),
+#    deps = [
+##        ":py",
+#    ],
+#    data = [
+#            ":backends"
+#    ],
+#)
+
+# these are overridden by rules_symforce versions
+#filegroup(
+#    name = "backends",
+#    srcs = glob([
+#        "symforce/codegen/backends/**"
+#    ]),
+#    # the jinja templates are here
+#)
+
+py_library(
+    name = "py",
+    srcs = glob([
+        "symforce/**/*.py",
+    ],
+     exclude=[
+#        "symforce/codegen/backends/**",
+        "symforce/examples/**",
+        "symforce/benchmarks/**",
+     ]),
+    deps = [
+    #    requirement("skymarshal"),
+    #    requirement("symforce-sym"), # generated python types
+        requirement("sympy"),
+        requirement("typing-extensions"),
+    ],
+)
+
+# all the registered GEO TYPES
+GEO_TYPES = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"]
+
+CAM_TYPES = [   
+        'sf.atan_camera_cal.ATANCameraCal', 
+        'sf.double_sphere_camera_cal.DoubleSphereCameraCal', 
+        'sf.equirectangular_camera_cal.EquirectangularCameraCal', 
+        'sf.linear_camera_cal.LinearCameraCal',  
+        'sf.polynomial_camera_cal.PolynomialCameraCal', 
+        'sf.spherical_camera_cal.SphericalCameraCal']
+
+# run codegen generators for the gen/ directory
+cc_gen_pkg( 
+        name = "geo_package", 
+        geo_types = GEO_TYPES 
+)
+
+cc_sym_util_pkg( 
+        name = "sym_util_package", 
+        geo_types = GEO_TYPES, 
+        cam_types = CAM_TYPES
+)
+
+#cc_gen_pkg( name = "geo_factors", types = GEO_TYPES )
+
+
+cc_library(
+    name = "gen_lib",
+    srcs = [
+        ":geo_package",
+        ":sym_util_package",
+    ],
+    hdrs = [":geo_package"],
+#    hdrs =[":gen_codegen"],
+#    glob([
+#       "gen/**/*.cc",
+#    ]),
+#    hdrs =  glob([
+#        "gen/**/*.h",
+#      ]),
+    includes=[],
+    deps = [
+        ":geo_package",
+        ":sym_util_package",
+        ":lcmtypes",
+        "@eigen",
+    ],
+    copts=COPTS,
+)
+
+# values needs to know about all the types that are genned
+# this allows for injection of user defined types here   
+cc_library(
+    name = "values",
+    srcs = [
+       "symforce/opt/values.cc",
+       "symforce/opt/values.tcc",
+       "symforce/opt/key.cc",
+    ],
+    hdrs =  [
+       "symforce/opt/values.h",
+       "symforce/opt/assert.h",
+       "symforce/opt/internal/hash_combine.h",
+       "symforce/opt/key.h",
+       "symforce/opt/optional.h",
+    ],
+    deps = [
+        ":gen_lib",
+        "@fmt",
+        "@tl_optional",
+    ],
+    copts=COPTS,
+)
+
+cc_library(
+    name = "opt",
+    srcs = glob([
+       "symforce/opt/**/*.cc",
+    ],
+    exclude=[
+       "symforce/opt/sparse_cholesky/**",
+       "symforce/opt/values.cc",
+    ]),
+    hdrs =  glob([
+        "symforce/opt/**/*.h",
+        "symforce/opt/**/*.tcc",
+      ],
+        exclude=[
+          "symforce/opt/sparse_cholesky/**",
+          "symforce/opt/values.h",
+          "symforce/opt/values.tcc",
+     ]),
+    deps = [
+        ":sparse_cholesky",
+        ":skymarshal_core",
+        ":lcmtypes",
+        ":eigen_lcm",
+        "@metis",
+        "@eigen",
+        "@spdlog",
+        "@fmt",
+        "@tl_optional",
+        ":values",
+    ],
+    copts=COPTS,
+)
+
+
+cc_library(
+    name = "sparse_cholesky",
+    srcs = glob([
+       "symforce/opt/sparse_cholesky/**/*.cc",
+       "symforce/opt/sparse_cholesky/**/*.tcc",
+    ]),
+    hdrs =  glob([
+       "symforce/opt/sparse_cholesky/**/*.h",
+       "symforce/opt/assert.h",
+    ]),
+    deps = [
+        "@metis",
+        "@eigen",
+        "@spdlog",
+        "@fmt",
+    ],
+    copts=COPTS,
+)
+
+#cc_test(
+#        name ="test",
+#        srcs = ["test/codegen_cpp_test.cc"],
+#        deps = [
+#            ":symforce",
+#            ":lcmtypes",
+#            "@catch2//:catch2_main",
+#        ],
+#)
+
+# run all codegen
+# creates the gen/ directory
+#py_binary(
+#    name = "generate_gen",
+#    srcs = ["generate_gen.py"],
+#    main = "generate_gen.py",
+#    deps = [
+#        ":py",
+#        ":backend_configs",
+#    ],
+#)
+#
+#py_library(
+#    name = "skymarshal",
+#    srcs = glob(["third_party/skymarshal/**/*.py"]),
+#    imports = ["third_party"],
+#    deps = [
+#            requirement("argh"),
+#            requirement("jinja2"),
+#            requirement("numpy"),
+#            requirement("ply"),
+#            requirement("six"),
+#    ],
+#    data = glob(["third_party/skymarshal/**"])
+#)
+#
+#py_binary(
+#    name = "skymarshalpy",
+#    srcs = ["third_party/skymarshal/skymarshal/__main__.py"],
+#    main = "third_party/skymarshal/skymarshal/__main__.py",
+#    deps = [
+#            ":skymarshal",
+#    ],
+#)
+
+

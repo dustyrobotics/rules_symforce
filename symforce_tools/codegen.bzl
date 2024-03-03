@@ -62,7 +62,7 @@ _generate_factor = rule(
         "compiler": attr.label(
             executable = True,
             cfg = "exec",
-            default = Label("@rules_symforce//symforce:compiler"),
+            default = Label("@rules_symforce//symforce_tools:compiler"),
         ),
         "output_residual_cpp": attr.output(mandatory = True),
         "output_factor_cpp": attr.output(mandatory = False),
@@ -117,7 +117,7 @@ def cc_symforce_factor(name,
         native.cc_library(
             name = name,
             hdrs = [output_residual_cpp, output_factor_cpp],
-            deps = ["@eigen", "@symforce"] + deps,
+            deps = ["@eigen", "@symforce_repo//:symforce"] + deps,
             visibility = ["//visibility:public"],
             tags = tags,
         )
@@ -189,7 +189,7 @@ _codegen = rule(
         "compiler": attr.label(
             executable = True,
             cfg = "exec",
-            default = Label("@rules_symforce//symforce:compiler"),
+            default = Label("@rules_symforce//symforce_tools:compiler"),
         ),
         "output_cpp": attr.output(mandatory = True),
     },
@@ -234,7 +234,7 @@ def cc_symforce_library(name,
         native.cc_library(
             name = name,
             hdrs = [output_cpp],
-            deps = ["@eigen", "@symforce"] + deps,
+            deps = ["@eigen", "@symforce_repo//:symforce"] + deps,
             visibility = ["//visibility:public"],
             tags = tags,
         )
