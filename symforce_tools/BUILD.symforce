@@ -48,15 +48,27 @@ cc_library(
         ":opt",
         ":gen_lib",
     ],
+    linkstatic = True,
     copts=COPTS,
 )
 
+#cc_lcm_library(
+#        name="lcmtypes",
+#        srcs = [
+#            ":symforce_types",
+##            "lcmtypes/symforce_types.lcm",
+#            "lcmtypes/symforce.lcm",
+#        ],
+#)
+
 cc_lcm_library(
-        name="lcmtypes",
-        srcs = [
-            "lcmtypes/symforce_types.lcm",
-            "lcmtypes/symforce.lcm",
-        ],
+        name="symforce_lcm_lib",
+        src = "lcmtypes/symforce.lcm",
+)
+
+cc_lcm_library(
+        name="symforce_types_lcm_lib",
+        src = "lcmtypes/symforce_types.lcm",
 )
 
 # generate the code for the types
@@ -104,6 +116,7 @@ py_library(
 
 # all the registered GEO TYPES
 GEO_TYPES = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"]
+GEO_FACTORS_TYPES = ["sf.Rot2", "sf.Rot3", "sf.V3", "sf.Pose2", "sf.Pose3"]
 
 CAM_TYPES = [   
         'symforce.cam.atan_camera_cal.ATANCameraCal', 
@@ -133,7 +146,8 @@ py_gen_pkg(
 
 cc_gen_pkg( 
         name = "geo_factors", 
-        geo_types = GEO_TYPES,
+           # generate between factors for these types
+        geo_types = GEO_FACTORS_TYPES,
 )
 
 cc_gen_pkg( 
@@ -148,12 +162,10 @@ cc_sym_util_pkg(
 )
 
 lcm_pkg( 
-        name = "lcm_types", 
+        name = "symforce_types", 
         geo_types = GEO_TYPES, 
         cam_types = CAM_TYPES,
 )
-
-#cc_gen_pkg( name = "geo_factors", types = GEO_TYPES )
 
 
 cc_library(
@@ -173,13 +185,15 @@ cc_library(
         ":sym_util_package",
     ],
     deps = [
-        ":geo_package",
+        ":geo_package", # provides headers and includes
         ":geo_factors",
         ":cam_package",
         ":slam_factors",
         ":sym_util_package",
-        ":lcmtypes",
+        ":symforce_lcm_lib",
+        ":symforce_types_lcm_lib",
         "@eigen",
+        ":skymarshal_core"
     ],
     copts=COPTS,
 )
@@ -205,6 +219,7 @@ cc_library(
         "@fmt",
         "@tl_optional",
     ],
+    includes = ["."],
     copts=COPTS,
 )
 
@@ -229,7 +244,6 @@ cc_library(
     deps = [
         ":sparse_cholesky",
         ":skymarshal_core",
-        ":lcmtypes",
         ":eigen_lcm",
         "@metis",
         "@eigen",
@@ -238,6 +252,7 @@ cc_library(
         "@tl_optional",
         ":values",
     ],
+    includes = ["."],
     copts=COPTS,
 )
 

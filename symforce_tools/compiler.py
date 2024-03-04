@@ -8,6 +8,9 @@ symforce.set_symbolic_api("symengine")
 symforce.set_log_level("warning")
 from symforce import codegen
 
+from rules_symforce.symforce_tools.codegen.backends.cpp.cpp_config import CppConfig
+
+
 
 def write_function_to_disk(data, path):
     # generate the residual 
@@ -66,7 +69,7 @@ def generatefactor(basename,
 
 
     data = codegen.Codegen.function(FUNCTION, 
-                                    config=codegen.CppConfig(),
+                                    config=CppConfig(),
                                     name = name,
                                     input_types = input_types,
                                     output_names = output_names
@@ -107,7 +110,7 @@ def rawcodegen(basename, python_src, function_name, return_key, output_names, ou
 
     print("the return key for this is:", return_key)
     data = codegen.Codegen.function(FUNCTION, 
-                                    config=codegen.CppConfig(),
+                                    config=CppConfig(),
                                     name = basename,
                                     input_types = input_types,
                                     output_names = output_names,

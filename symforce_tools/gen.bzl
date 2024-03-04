@@ -25,13 +25,13 @@ def _generate_gen_impl(ctx):
 
     # ideally we split this into headers and cc
     compilation_context = cc_common.create_compilation_context(
-        headers=depset([]),
-        includes=depset([output_dir.path + "/cpp"]),
+        headers = depset([output_dir]),
+        includes = depset([output_dir.path + "/cpp"]),
     )
     return [
             DefaultInfo(files = depset([output_dir])),
             CcInfo(
-                    compilation_context = compilation_context,
+                compilation_context = compilation_context,
             )
     ]
 
@@ -84,9 +84,10 @@ def _generate_gen_lcm_impl(ctx):
         outputs = [output_dir],
         arguments = arguments,
         mnemonic = "SymforceCompile",
-        progress_message = "Compiling symforce...",
+        progress_message = "Compiling symforce into lcm types...",
         executable = ctx.executable.compiler,
     )
+
     return [
             DefaultInfo(files = depset([output_dir])),
             # make lcm outputs

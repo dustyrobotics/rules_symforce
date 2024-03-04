@@ -1,27 +1,42 @@
 def _impl(ctx):
-    cmd = []
-    cmd.extend(["--cpp"])
+    arguments = ["--cpp"]
 
     # header output dir
-    header_output_dir = ctx.genfiles_dir.path + "/" + ctx.attr.src.label.workspace_root + "/lcmtypes"
-    cmd.extend(["--cpp-hpath", header_output_dir])
-    cmd.extend(["--cpp-include", "lcmtypes"])
+    #header_output_path = ctx.genfiles_dir.path + "/" + ctx.attr.src.label.workspace_root + "/lcmtypes"
+    header_output_path = ctx.label.name + "_gen" + "/lcmtypes"
+    header_output_dir = ctx.actions.declare_directory(header_output_path)
+    arguments.extend(["--cpp-hpath", header_output_dir.path])
+    arguments.extend(["--cpp-include", "lcmtypes"])
 
-    cmd.append(ctx.file.src.path)
+    files = ctx.attr.src[DefaultInfo].files.to_list()
+    for file in files:
+        print(file.path)
+        arguments.append(file.path)# the lcm file
 
-    cmd.extend(["--verbose"])
-    cmd.extend(["--print-def"])
+    arguments.extend(["--verbose"])
+    arguments.extend(["--print-def"])
 
     ctx.actions.run(
         inputs = [ctx.file.src],
-        outputs = ctx.outputs.outs,
+        outputs = [header_output_dir],
         mnemonic = "LcmCompile",
         progress_message = "generating lcm types...",
-        arguments = cmd,
+        arguments = arguments,
         executable = ctx.executable._compiler,
     )
 
-    return [DefaultInfo(files = depset(ctx.outputs.outs))]
+    # ideally we split this into headers and cc
+    compilation_context = cc_common.create_compilation_context(
+        headers = depset([header_output_dir]),
+        includes = depset([header_output_dir.path,
+                           header_output_dir.path.replace("/lcmtypes", "")]),
+    )
+    return [
+            DefaultInfo(files = depset([header_output_dir])),
+            CcInfo(
+                compilation_context = compilation_context,
+            )
+    ]
 
 _lcmgen = rule(
     attrs = {
@@ -34,13 +49,15 @@ _lcmgen = rule(
             cfg = "exec",
             default = Label("@rules_symforce//symforce_tools:lcmgen"),
         ),
-        "outs": attr.output_list(),
+        #"outs": attr.output_list(),
     },
     output_to_genfiles = True,
     implementation = _impl,
 )
 
-def cc_lcm_library(name, srcs, deps = []):
+def cc_lcm_library(name, 
+                   src, 
+                   deps = []):
     all_outputs = dict()
 
     #TODO ideally we parse the input lcm for the stanzas that produce these outputs
@@ -69,26 +86,23 @@ def cc_lcm_library(name, srcs, deps = []):
         "lcmtypes/sym/valuesf_t.hpp",
         "lcmtypes/sym/values_t.hpp",
     ]
-    all_outputs["lcmtypes/symforce_types.lcm"] = ["lcmtypes/sym/type_t.hpp"]
+    all_outputs["lcm_types/symforce_types.lcm"] = ["lcm_types/sym/type_t.hpp"]
 
-    for lcmfile in srcs:
-        basename = lcmfile.split(".")[0]
-        _lcmgen(
-            name = basename + "_lcm_gen",
-            src = lcmfile,
-            outs = all_outputs[lcmfile],
-        )
+    _lcmgen(
+        name = name,
+        src = src,
+    )
 
-    all_hdrs = []
+    #all_hdrs = []
 
-    for v in all_outputs.values():
-        all_hdrs.extend(v)
+    #for v in all_outputs.values():
+    #    all_hdrs.extend(v)
 
     # make a cc library out of the resulting lcm generated types
-    native.cc_library(
-        name = name,
-        hdrs = all_hdrs,
-        deps = ["@symforce_repo//:skymarshal_core"] + deps,
-        includes = [".", "lcmtypes"],
-        visibility = ["//visibility:public"],
-    )
+    #native.cc_library(
+    #    name = name,
+    #    hdrs = all_hdrs,
+    #    deps = ["@symforce_repo//:skymarshal_core"] + deps,
+    #    includes = [".", "lcmtypes"],
+    #    visibility = ["//visibility:public"],
+    #)

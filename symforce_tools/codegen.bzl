@@ -106,8 +106,8 @@ def cc_symforce_factor(name,
                         src,
                 ],
                 deps = [
-                        requirement("symforce-sym"),
-                        requirement("symforce"),  # this one is from pip
+                        "@symforce_repo//:py",
+                        "@symforce_repo//:symforce_sym",
                         requirement("sympy"),
                         ],
                 tags = tags,
@@ -224,8 +224,8 @@ def cc_symforce_library(name,
                         src,
                 ],
                 deps = [
-                        requirement("symforce-sym"),
-                        requirement("symforce"),  # this one is from pip
+                        "@symforce_repo//:py",
+                        "@symforce_repo//:symforce_sym",
                         requirement("sympy"),
                         ],
                 visibility = ["//visibility:public"],

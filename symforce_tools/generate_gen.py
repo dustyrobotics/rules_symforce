@@ -77,7 +77,7 @@ def cc_common_options(f):
 @common_options
 @click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
 @click.option('--cam_types',  multiple=True, help="what camera types are in the package to generate")
-def lcm_types(output_dir, geo_types, cam_types):
+def symforce_types(output_dir, geo_types, cam_types):
     from symforce.codegen import codegen_config
     from symforce.codegen import template_util
     from symforce import python_util
@@ -98,17 +98,19 @@ def lcm_types(output_dir, geo_types, cam_types):
             output_path = output_dir / "lcmtypes" / "symforce_types.lcm",
     )
 
-    types_package_codegen_stripped.generate_types(
-                                                package_name = "sym",
-                                                file_name = output_dir / "lcmtypes" / "symforce.lcm",
-#    values_indices: T.Mapping[str, T.Dict[str, IndexEntry]],
-                                                use_eigen_types = True,
-#    shared_types: T.Mapping[str, str] = None,
-                                            scalar_type = "double",
-                                            output_dir = output_dir / "lcmtypes",
-#    lcm_bindings_output_dir: T.Openable = None,
-                                            templates =  "types.lcm.jinja")
-
+    # can't get this to work!!!
+    # I am not sure how to generate symforce.lcm
+    #types_package_codegen_stripped.generate_types(
+    #                                            package_name = "sym",
+    #                                            file_name = output_dir / "lcmtypes" / "symforce.lcm",
+#   # values_indices: T.Mapping[str, T.Dict[str, IndexEntry]],
+    #                                            use_eigen_types = True,
+#   # shared_types: T.Mapping[str, str] = None,
+    #                                        scalar_type = "double",
+    #                                        output_dir = output_dir / "lcmtypes",
+#   # lcm_bindings_output_dir: T.Openable = None,
+    #                                        templates =  "types.lcm.jinja")
+    #
     #template_util.render_template(
     #        template_path="types.lcm.jinja",
     #        data=dict(

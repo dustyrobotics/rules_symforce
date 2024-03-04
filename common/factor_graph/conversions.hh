@@ -1,6 +1,6 @@
 #pragma once
 #include "common/factor_graph/types.hh"
-#include "external/symforce/symforce/opt/key.h"
+#include "external/symforce_repo/symforce/opt/key.h"
 #include "imsym/imsym.hh"
 
 #include <Eigen/Core>
