@@ -2,7 +2,6 @@ def _impl(ctx):
     arguments = ["--cpp"]
 
     # header output dir
-    #header_output_path = ctx.genfiles_dir.path + "/" + ctx.attr.src.label.workspace_root + "/lcmtypes"
     header_output_path = ctx.label.name + "_gen" + "/lcmtypes"
     header_output_dir = ctx.actions.declare_directory(header_output_path)
     arguments.extend(["--cpp-hpath", header_output_dir.path])
@@ -49,60 +48,14 @@ _lcmgen = rule(
             cfg = "exec",
             default = Label("@rules_symforce//symforce_tools:lcmgen"),
         ),
-        #"outs": attr.output_list(),
     },
-    output_to_genfiles = True,
     implementation = _impl,
 )
 
 def cc_lcm_library(name, 
                    src, 
                    deps = []):
-    all_outputs = dict()
-
-    #TODO ideally we parse the input lcm for the stanzas that produce these outputs
-    # but we just hardcode these for now as they don't change often
-    all_outputs["lcmtypes/symforce.lcm"] = [
-        "lcmtypes/sym/index_entry_t.hpp",
-        "lcmtypes/sym/index_t.hpp",
-        "lcmtypes/sym/key_t.hpp",
-        "lcmtypes/sym/linearization_dense_factor_helper_t.hpp",
-        "lcmtypes/sym/linearization_dense_key_helper_t.hpp",
-        "lcmtypes/sym/linearization_sparse_factor_helper_t.hpp",
-        "lcmtypes/sym/linearization_offsets_t.hpp",
-        "lcmtypes/sym/linearized_dense_factorf_t.hpp",
-        "lcmtypes/sym/linearized_dense_factor_t.hpp",
-        "lcmtypes/sym/optimization_iteration_t.hpp",
-        "lcmtypes/sym/optimization_stats_t.hpp",
-        "lcmtypes/sym/optimization_status_t.hpp",
-        "lcmtypes/sym/levenberg_marquardt_solver_failure_reason_t.hpp",
-        "lcmtypes/sym/optimizer_gnc_params_t.hpp",
-        "lcmtypes/sym/optimizer_params_t.hpp",
-        "lcmtypes/sym/imu_biases_t.hpp",
-        "lcmtypes/sym/imu_integrated_measurement_delta_t.hpp",
-        "lcmtypes/sym/imu_integrated_measurement_derivatives_t.hpp",
-        "lcmtypes/sym/imu_integrated_measurement_t.hpp",
-        "lcmtypes/sym/sparse_matrix_structure_t.hpp",
-        "lcmtypes/sym/valuesf_t.hpp",
-        "lcmtypes/sym/values_t.hpp",
-    ]
-    all_outputs["lcm_types/symforce_types.lcm"] = ["lcm_types/sym/type_t.hpp"]
-
     _lcmgen(
         name = name,
         src = src,
     )
-
-    #all_hdrs = []
-
-    #for v in all_outputs.values():
-    #    all_hdrs.extend(v)
-
-    # make a cc library out of the resulting lcm generated types
-    #native.cc_library(
-    #    name = name,
-    #    hdrs = all_hdrs,
-    #    deps = ["@symforce_repo//:skymarshal_core"] + deps,
-    #    includes = [".", "lcmtypes"],
-    #    visibility = ["//visibility:public"],
-    #)

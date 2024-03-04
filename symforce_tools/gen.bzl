@@ -67,8 +67,8 @@ def _generate_py_gen_impl(ctx):
 
 def _generate_gen_lcm_impl(ctx):
     subcommand = ctx.label.name.replace("_", "-")
-    output_dir = ctx.actions.declare_directory(ctx.label.name + "_gen")
-    arguments = [subcommand, "--output_dir", output_dir.path]
+    output_lcm_file = ctx.actions.declare_file(ctx.label.name + ".lcm")
+    arguments = [subcommand, "--output_lcm", output_lcm_file.path]
 
     for t in ctx.attr.geo_types:
         arguments.append("--geo_types")
@@ -78,56 +78,19 @@ def _generate_gen_lcm_impl(ctx):
         arguments.append("--cam_types")
         arguments.append(t)
 
-
     ctx.actions.run(
-        inputs = [], # backends
-        outputs = [output_dir],
+        inputs = [],
+        outputs = [output_lcm_file],
         arguments = arguments,
-        mnemonic = "SymforceCompile",
+        mnemonic = "SymforceCompileLcm",
         progress_message = "Compiling symforce into lcm types...",
         executable = ctx.executable.compiler,
     )
 
+    # lcm provider?
     return [
-            DefaultInfo(files = depset([output_dir])),
-            # make lcm outputs
+            DefaultInfo(files = depset([output_lcm_file])),
     ]
-
-#def _gen_sym_util_package_impl(ctx):
-#    subcommand = ctx.label.name.replace("_", "-")
-#    output_dir = ctx.actions.declare_directory(ctx.label.name + "_gen")
-##    arguments = [subcommand, "--output_dir", output_dir.path]
-#
-#    for t in ctx.attr.geo_types:
-#        arguments.append("--geo_types")
-#        arguments.append(t)
-#
-#    for t in ctx.attr.cam_types:
-#        arguments.append("--cam_types")
-#        arguments.append(t)
-#
-#    ctx.actions.run(
-#        inputs = [], # backends
-#        outputs = [output_dir],
-#        arguments = arguments,
-#        mnemonic = "SymforceCompile",
-#        progress_message = "Compiling symforce...",
-#        executable = ctx.executable.compiler,
-#    )
-#
-#    # ideally we split this into headers and cc
-#    compilation_context = cc_common.create_compilation_context(
-#        headers=depset([]),
-#        includes=depset([output_dir.path + "/cpp"]),
-#    )
-#    return [
-#            DefaultInfo(files = depset([output_dir])),
-#            CcInfo(
-#                    compilation_context = compilation_context,
-#            )
-#    ]
-
-
 
 _gen_sym_geo_resource = rule(
     attrs = {
@@ -194,7 +157,6 @@ _gen_sym_util_package = rule(
             default = Label("@rules_symforce//symforce_tools:generate_gen"),
         ),
     },
-    #implementation = _gen_sym_util_package_impl,
     implementation = _generate_gen_impl,
 )
 

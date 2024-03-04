@@ -74,10 +74,10 @@ def cc_common_options(f):
     return f
 
 @cli.command()
-@common_options
 @click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
 @click.option('--cam_types',  multiple=True, help="what camera types are in the package to generate")
-def symforce_types(output_dir, geo_types, cam_types):
+@click.option("--output_lcm",  type=Path, required=True, help = "path to output file")
+def symforce_types(output_lcm, geo_types, cam_types):
     from symforce.codegen import codegen_config
     from symforce.codegen import template_util
     from symforce import python_util
@@ -95,36 +95,45 @@ def symforce_types(output_dir, geo_types, cam_types):
                        CAM_TYPES = CAM_TYPES,
                     ),
             config = codegen_config.RenderTemplateConfig(),
-            output_path = output_dir / "lcmtypes" / "symforce_types.lcm",
+            #output_path = output_dir / "lcmtypes" / "symforce_types.lcm",
+            output_path = output_lcm,
     )
+    print("output", output_lcm)
 
+@cli.command()
+@click.option("--output_lcm",  type=Path, required=True, help = "path to output file")
+def types(output_lcm):
+    from symforce.codegen import codegen_config
+    from symforce.codegen import template_util
+    from symforce import types_util
+    from rules_symforce.symforce_tools.codegen.lcm_template_dir import LCM_TEMPLATE_DIR
+
+    # TODO re explore this when we want to generate types via values automatically
     # can't get this to work!!!
     # I am not sure how to generate symforce.lcm
-    #types_package_codegen_stripped.generate_types(
-    #                                            package_name = "sym",
-    #                                            file_name = output_dir / "lcmtypes" / "symforce.lcm",
-#   # values_indices: T.Mapping[str, T.Dict[str, IndexEntry]],
-    #                                            use_eigen_types = True,
-#   # shared_types: T.Mapping[str, str] = None,
-    #                                        scalar_type = "double",
-    #                                        output_dir = output_dir / "lcmtypes",
-#   # lcm_bindings_output_dir: T.Openable = None,
-    #                                        templates =  "types.lcm.jinja")
-    #
-    #template_util.render_template(
-    #        template_path="types.lcm.jinja",
-    #        data=dict(
-    #            data,
-    #            types_to_generate = types_to_generate,
-    #            types_util = types_util,
-    #            use_eigen_types = use_eigen_types,
-    #        ),
-    #        config = codegen_config.RenderTemplateConfig(),
-    #        template_dir=LCM_TEMPLATE_DIR,
-    #        output_path = output_dir / "lcmtypes" / "symforce.lcm",
-    #    )
-    print_dir( output_dir / "lcmtypes" )
-
+    types_package_codegen_stripped.generate_types(
+                                                package_name = "sym",
+                                                file_name = output_lcm,
+#    values_indices: T.Mapping[str, T.Dict[str, IndexEntry]],
+                                                use_eigen_types = True,
+#    shared_types: T.Mapping[str, str] = None,
+                                            scalar_type = "double",
+                                            output_dir = output_lcm.parent ,
+#   lcm_bindings_output_dir: T.Openable = None,
+                                           templates =  "types.lcm.jinja")
+    types_to_generate = types_util.get_types_to_generate()
+    template_util.render_template(
+            template_dir = LCM_TEMPLATE_DIR,
+            template_path = "types.lcm.jinja",
+            data=dict(
+               # data,
+                types_to_generate = types_to_generate,
+                types_util = types_util,
+                use_eigen_types = True,
+            ),
+            config = codegen_config.RenderTemplateConfig(),
+            output_path = output_lcm,
+    )
 
 @cli.command()
 @common_options

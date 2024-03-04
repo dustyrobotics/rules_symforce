@@ -52,15 +52,6 @@ cc_library(
     copts=COPTS,
 )
 
-#cc_lcm_library(
-#        name="lcmtypes",
-#        srcs = [
-#            ":symforce_types",
-##            "lcmtypes/symforce_types.lcm",
-#            "lcmtypes/symforce.lcm",
-#        ],
-#)
-
 cc_lcm_library(
         name="symforce_lcm_lib",
         src = "lcmtypes/symforce.lcm",
@@ -68,33 +59,8 @@ cc_lcm_library(
 
 cc_lcm_library(
         name="symforce_types_lcm_lib",
-        src = "lcmtypes/symforce_types.lcm",
+        src = ":symforce_types",
 )
-
-# generate the code for the types
-# TODO layer in other backends
-# these are overridden by rules_symforce versions
-#py_library(
-#    name = "backend_configs",
-#    srcs = glob([
-#        "symforce/codegen/backends/*/*.py",
-#    ]),
-#    deps = [
-##        ":py",
-#    ],
-#    data = [
-#            ":backends"
-#    ],
-#)
-
-# these are overridden by rules_symforce versions
-#filegroup(
-#    name = "backends",
-#    srcs = glob([
-#        "symforce/codegen/backends/**"
-#    ]),
-#    # the jinja templates are here
-#)
 
 py_library(
     name = "py",
@@ -102,13 +68,13 @@ py_library(
         "symforce/**/*.py",
     ],
      exclude=[
-#        "symforce/codegen/backends/**",
+        "symforce/codegen/backends/*/templates/**",
+        # this is only used for initial import of the backend configs:
+        # they are overridden in all tools with the rules_symforce ones
         "symforce/examples/**",
         "symforce/benchmarks/**",
      ]),
     deps = [
-    #    requirement("skymarshal"),
-    #    requirement("symforce-sym"), # generated python types
         requirement("sympy"),
         requirement("typing-extensions"),
     ],
@@ -167,6 +133,10 @@ lcm_pkg(
         cam_types = CAM_TYPES,
 )
 
+#lcm_pkg( 
+#        name = "types", 
+#        # just the base symforce type gen
+#)
 
 cc_library(
     name = "gen_lib",
