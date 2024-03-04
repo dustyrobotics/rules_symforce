@@ -24,8 +24,6 @@ from symforce.codegen.ops_codegen_util import make_lie_group_ops_funcs
 from rules_symforce.symforce_tools.codegen.backends.cpp.cpp_config import CppConfig
 from rules_symforce.symforce_tools.codegen.backends.python.python_config import PythonConfig
 
-
-
 def geo_class_common_data(cls: T.Type, config: CodegenConfig) -> T.Dict[str, T.Any]:
     """
     Data for template generation of this class. Contains all useful info common
@@ -189,7 +187,10 @@ def _custom_generated_methods(config: CodegenConfig) -> T.Dict[T.Type, T.List[Co
     }
 
 
-def generate(GEO_TYPES = T.Sequence[T.Type], config: CodegenConfig = CppConfig, output_dir: Path = None) -> Path:
+def generate(
+             GEO_TYPES: T.Sequence[T.Type], 
+             config: CodegenConfig = CppConfig, 
+             output_dir: Path = None) -> Path:
     """
     Generate the geo package for the given language.
     """
@@ -242,16 +243,17 @@ def generate(GEO_TYPES = T.Sequence[T.Type], config: CodegenConfig = CppConfig, 
         )
 
         # Package init
-        templates.add(
-            template_path=Path("geo_package", "__init__.py.jinja"),
-            data=dict(
-                Codegen.common_data(),
-                all_types = GEO_TYPES,
-                numeric_epsilon=sf.numeric_epsilon,
-            ),
-            config=config.render_template_config,
-            output_path=package_dir / "__init__.py",
-        )
+        #(asa) this is handled in cam package codegen
+        #templates.add(
+        #    template_path=Path("geo_package", "__init__.py.jinja"),
+        #    data=dict(
+        #        Codegen.common_data(),
+        #        all_types = GEO_TYPES,
+        #        numeric_epsilon=sf.numeric_epsilon,
+        #    ),
+        #    config=config.render_template_config,
+        #    output_path=package_dir / "__init__.py",
+        #)
 
         ## Test example
         #for name in ("geo_package_python_test.py",):

@@ -52,6 +52,7 @@ py_library(
     name = "codegen_stripped",
     srcs = [
         "codegen/geo_package_codegen_stripped.py",
+        "codegen/cam_package_codegen_stripped.py",
         "codegen/sym_util_package_codegen_stripped.py",
     ],
     deps = [

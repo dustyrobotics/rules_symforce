@@ -46,7 +46,7 @@ cc_library(
         "@spdlog",
         "@eigen",
         ":opt",
-        ":gen",
+        ":gen_lib",
     ],
     copts=COPTS,
 )
@@ -106,23 +106,27 @@ py_library(
 GEO_TYPES = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"]
 
 CAM_TYPES = [   
-        'sf.atan_camera_cal.ATANCameraCal', 
-        'sf.double_sphere_camera_cal.DoubleSphereCameraCal', 
-        'sf.equirectangular_camera_cal.EquirectangularCameraCal', 
-        'sf.linear_camera_cal.LinearCameraCal',  
-        'sf.polynomial_camera_cal.PolynomialCameraCal', 
-        'sf.spherical_camera_cal.SphericalCameraCal']
+        'symforce.cam.atan_camera_cal.ATANCameraCal', 
+        'symforce.cam.double_sphere_camera_cal.DoubleSphereCameraCal', 
+        'symforce.cam.equirectangular_camera_cal.EquirectangularCameraCal', 
+        'symforce.cam.linear_camera_cal.LinearCameraCal',  
+        'symforce.cam.polynomial_camera_cal.PolynomialCameraCal', 
+        'symforce.cam.spherical_camera_cal.SphericalCameraCal']
 
 # run codegen generators for the gen/ directory
 cc_gen_pkg( 
         name = "geo_package", 
-        geo_types = GEO_TYPES 
+        geo_types = GEO_TYPES,
 )
-
+cc_gen_pkg( 
+        name = "cam_package", 
+        geo_types = GEO_TYPES,
+        cam_types = CAM_TYPES,
+)
 cc_sym_util_pkg( 
         name = "sym_util_package", 
         geo_types = GEO_TYPES, 
-        cam_types = CAM_TYPES
+        cam_types = CAM_TYPES,
 )
 
 #cc_gen_pkg( name = "geo_factors", types = GEO_TYPES )
@@ -132,9 +136,14 @@ cc_library(
     name = "gen_lib",
     srcs = [
         ":geo_package",
+        ":cam_package",
         ":sym_util_package",
     ],
-    hdrs = [":geo_package"],
+    hdrs = [
+        ":geo_package",
+        ":cam_package",
+        ":sym_util_package",
+    ],
 #    hdrs =[":gen_codegen"],
 #    glob([
 #       "gen/**/*.cc",
@@ -145,6 +154,7 @@ cc_library(
     includes=[],
     deps = [
         ":geo_package",
+        ":cam_package",
         ":sym_util_package",
         ":lcmtypes",
         "@eigen",
