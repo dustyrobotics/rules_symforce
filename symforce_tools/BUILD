@@ -45,15 +45,25 @@ filegroup(
     ]),
 )
 
+filegroup(
+    name = "lcm_templates",
+    srcs = glob([
+        "codegen/lcm_templates/**"
+    ]),
+)
 # stripped versions of the codegen files in symforce source
 # they are stripped so that lcm types can be injected and agregated through bazel
 # less "magic" and more explicit
 py_library(
-    name = "codegen_stripped",
+    name = "codegen_utils",
     srcs = [
         "codegen/geo_package_codegen_stripped.py",
         "codegen/cam_package_codegen_stripped.py",
+        "codegen/geo_factors_codegen_stripped.py",
+        "codegen/slam_factors_codegen_stripped.py",
+        "codegen/types_package_codegen_stripped.py",
         "codegen/sym_util_package_codegen_stripped.py",
+        "codegen/lcm_template_dir.py",
     ],
     deps = [
         "@symforce_repo//:py",
@@ -71,7 +81,10 @@ py_binary(
     main = "generate_gen.py",
     deps = [
         "@symforce_repo//:py",
-        ":codegen_stripped",
+        ":codegen_utils",
         ":backend_configs",
+    ],
+    data = [
+        ":lcm_templates"
     ],
 )

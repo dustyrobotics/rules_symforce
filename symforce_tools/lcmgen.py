@@ -21,6 +21,7 @@ from skymarshal.emit_typescript import SkymarshalTypeScript
 from skymarshal.language_plugin import SkymarshalLanguage  # pylint: disable=unused-import
 from skymarshal.package_map import parse_lcmtypes
 
+# generate c++ code from lcm types
 
 def parse_args(languages, args=None):
     # type: (T.Sequence[T.Type[SkymarshalLanguage]], T.Optional[T.Sequence[str]]) -> argparse.Namespace

@@ -17,11 +17,12 @@ import symforce.symbolic as sf
 
 
 from symforce import typing as T
-#from symforce.codegen import cam_package_codegen
-from symforce.codegen import geo_factors_codegen
 
+from rules_symforce.symforce_tools.codegen import geo_factors_codegen_stripped
+from rules_symforce.symforce_tools.codegen import slam_factors_codegen_stripped
 from rules_symforce.symforce_tools.codegen import geo_package_codegen_stripped
 from rules_symforce.symforce_tools.codegen import cam_package_codegen_stripped
+from rules_symforce.symforce_tools.codegen import types_package_codegen_stripped
 from rules_symforce.symforce_tools.codegen import sym_util_package_codegen_stripped
 
 from symforce.codegen import slam_factors_codegen
@@ -72,22 +73,56 @@ def cc_common_options(f):
     f = click.option("--srcs",  type=bool, default=False, help = "only compile headers")(f)
     return f
 
-
 @cli.command()
 @common_options
-def lcm_types(output_dir):
- 
-    # LCM type_t
-    # need to generate the lcm types
-    templates.add(
-        template_path="symforce_types.lcm.jinja",
-        data= lcm_types_codegen.lcm_symforce_types_data(),
-        config= config.render_template_config,
-        template_dir= template_util.LCM_TEMPLATE_DIR,
-        output_path= package_dir / ".." / "lcmtypes" / "lcmtypes" / "symforce_types.lcm",
+@click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
+@click.option('--cam_types',  multiple=True, help="what camera types are in the package to generate")
+def lcm_types(output_dir, geo_types, cam_types):
+    from symforce.codegen import codegen_config
+    from symforce.codegen import template_util
+    from symforce import python_util
+    from rules_symforce.symforce_tools.codegen.lcm_template_dir import LCM_TEMPLATE_DIR
+
+    GEO_TYPES = gather_types(geo_types)
+    CAM_TYPES = gather_types(cam_types)
+    print("template dir", LCM_TEMPLATE_DIR)
+
+    template_util.render_template(
+            template_dir = LCM_TEMPLATE_DIR,
+            template_path = "symforce_types.lcm.jinja",
+            data= dict(python_util=python_util, 
+                       GEO_TYPES = GEO_TYPES,
+                       CAM_TYPES = CAM_TYPES,
+                    ),
+            config = codegen_config.RenderTemplateConfig(),
+            output_path = output_dir / "lcmtypes" / "symforce_types.lcm",
     )
 
-    templates.render()
+    types_package_codegen_stripped.generate_types(
+                                                package_name = "sym",
+                                                file_name = output_dir / "lcmtypes" / "symforce.lcm",
+#    values_indices: T.Mapping[str, T.Dict[str, IndexEntry]],
+                                                use_eigen_types = True,
+#    shared_types: T.Mapping[str, str] = None,
+                                            scalar_type = "double",
+                                            output_dir = output_dir / "lcmtypes",
+#    lcm_bindings_output_dir: T.Openable = None,
+                                            templates =  "types.lcm.jinja")
+
+    #template_util.render_template(
+    #        template_path="types.lcm.jinja",
+    #        data=dict(
+    #            data,
+    #            types_to_generate = types_to_generate,
+    #            types_util = types_util,
+    #            use_eigen_types = use_eigen_types,
+    #        ),
+    #        config = codegen_config.RenderTemplateConfig(),
+    #        template_dir=LCM_TEMPLATE_DIR,
+    #        output_path = output_dir / "lcmtypes" / "symforce.lcm",
+    #    )
+    print_dir( output_dir / "lcmtypes" )
+
 
 @cli.command()
 @common_options
@@ -137,22 +172,23 @@ def geo_package(output_dir, geo_types, hdrs, srcs):
                                           config = cc_config, 
                                           output_dir = cc_base)
     #split headers and cc files
-    if hdrs:
-        for f in cc_base.rglob("*.cc"):
-            print("removing", f)
-    if srcs:
-        for f in cc_base.rglob("*.h"):
-            print("removing", f)
+    #if hdrs:
+    #    for f in cc_base.rglob("*.cc"):
+    #        print("removing", f)
+    #if srcs:
+    #    for f in cc_base.rglob("*.h"):
+    #        print("removing", f)
     print_dir(cc_base)
 
 @cli.command()
-@common_options
-def geo_factors(output_dir):
-    TYPES = (sf.Rot2, sf.Rot3, sf.V3, sf.Pose2, sf.Pose3)
-    cc_config = CppConfig()
+@click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
+@cc_common_options
+def geo_factors(output_dir, geo_types, hdrs, srcs):
     cc_base = output_dir / "cpp"
-    geo_factors_codegen.generate_between_factors(types = TYPES, output_dir = cc_base / "sym" / "factors")
-    geo_factors_codegen.generate_pose3_extra_factors(cc_base / "sym" / "factors" )
+    GEO_TYPES = gather_types(geo_types)
+    geo_factors_codegen_stripped.generate_between_factors(types = GEO_TYPES, output_dir = cc_base / "sym" / "factors")
+    geo_factors_codegen_stripped.generate_pose3_extra_factors(cc_base / "sym" / "factors" )
+    print_dir(cc_base)
 
 @cli.command()
 @click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
@@ -174,85 +210,59 @@ def cam_package(output_dir, geo_types, cam_types, hdrs, srcs):
                                  CAM_TYPES = CAM_TYPES, 
                                  config = cc_config, output_dir = cc_base)
     #split headers and cc files
-    if hdrs:
-        for f in cc_base.rglob("*.cc"):
-            print("removing", f)
-    if srcs:
-        for f in cc_base.rglob("*.h"):
-            print("removing", f)
+    #if hdrs:
+    #    for f in cc_base.rglob("*.cc"):
+    #        print("removing", f)
+    #if srcs:
+    #    for f in cc_base.rglob("*.h"):
+    #        print("removing", f)
     print_dir(cc_base)
 
 
 @cli.command()
 @common_options
-def slam_factors(output_dir):
+@click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
+@click.option('--cam_types',  multiple=True, help="what camera types are in the package to generate")
+def slam_factors(output_dir, geo_types,  cam_types):
     cc_config = CppConfig()
     cc_base = output_dir / "cpp"
+    CAM_TYPES = gather_types(cam_types)
     print("slam factors")
-    slam_factors_codegen.generate(output_dir = cc_base / "sym", config = cc_config)
+    print("cam types", CAM_TYPES)
+    slam_factors_codegen_stripped.generate(CAM_TYPES = CAM_TYPES,  
+                                    output_dir = cc_base / "sym", 
+                                    config = cc_config)
     print("imu factors")
     generate_manifold_imu_preintegration(
             config = cc_config,
             output_dir = cc_base / "sym" / "factors" / "internal",
     )
+    print_dir(cc_base)
 
 @cli.command()
 @common_options
-def generate(output_dir):
-    TYPES = (sf.Rot2, sf.Rot3, sf.V3, sf.Pose2, sf.Pose3)
+@click.option('--geo_types',  multiple=True, help="what geo types are in the package to generate")
+@click.option('--cam_types',  multiple=True, help="what camera types are in the package to generate")
+def symforce_sym(output_dir, geo_types, cam_types):
+    """
+    generate the python symforce-sym package
+    """
     py_config = PythonConfig()
-    cc_config = CppConfig()
-    cc_base = output_dir / "cpp"
     py_base = output_dir / "python"
 
-    # Generate cam package, geo package
-    # This calls geo_package_codegen.generate internally
-    # First generate the geo package as it's a dependency of the cam package
+    GEO_TYPES = gather_types(geo_types)
+    CAM_TYPES = gather_types(cam_types)
     print("geo package")
-    # also makes lcm types .lcm
-    geo_package_codegen.generate(config = cc_config, output_dir = cc_base)
-    #geo_package_codegen.generate(config = py_config, output_dir = py_base)
+    geo_package_codegen_stripped.generate(GEO_TYPES = GEO_TYPES,
+                                          config = py_config, 
+                                          output_dir = py_base)
 
-    #print("cam package")
-    cam_package_codegen.generate(config = cc_config, output_dir = cc_base)
-    #cam_package_codegen.generate(config = py_config, output_dir = py_base)
-    
-    ## Prior factors, between factors, and SLAM factors for C++.
-    print("geo factors")
-    ## geo factors codegen calls the following two functions
-    geo_factors_codegen.generate_between_factors(types = TYPES, output_dir = cc_base / "sym" / "factors")
-    geo_factors_codegen.generate_pose3_extra_factors(cc_base / "sym" / "factors" )
-    
-    print("slam factors")
-    slam_factors_codegen.generate(output_dir = cc_base / "sym", config = cc_config)
-    print("imu factors")
-    generate_manifold_imu_preintegration(
-            config = cc_config,
-            output_dir = cc_base / "sym" / "factors" / "internal",
-    )
-
-    # LCM type_t
-    # need to generate the lcm types
-    #templates.add(
-    #    template_path="symforce_types.lcm.jinja",
-    #    data=lcm_types_codegen.lcm_symforce_types_data(),
-    #    config=config.render_template_config,
-    #    template_dir=template_util.LCM_TEMPLATE_DIR,
-    #    output_path=package_dir / ".." / "lcmtypes" / "lcmtypes" / "symforce_types.lcm",
-    #)
-
-    #templates.render()
-    # Generate typedefs.h
-    #print("sym_util_package_codegen.generate")
-    #sym_util_package_codegen.generate(config = cc_config, output_dir = cc_base)
-
-    # filter out what we don't want
-    print("filtering out non .h and .cc files")
-    for f in cc_base.rglob("*.lcm"):
-        f.unlink()
-    for f in cc_base.rglob("*.cc"):
-        if "tests" in f.parts:
-            f.unlink()
+    print("cam package")
+    cam_package_codegen_stripped.generate(GEO_TYPES = GEO_TYPES, 
+                                        CAM_TYPES = CAM_TYPES, 
+                                        config = py_config, 
+                                        output_dir = py_base)
+    print_dir(py_base)
 
 if __name__ == "__main__":
     cli()

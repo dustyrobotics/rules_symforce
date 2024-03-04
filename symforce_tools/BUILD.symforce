@@ -3,7 +3,7 @@ package(default_visibility = ["//visibility:public"])
 load("@symforce_requirements//:requirements.bzl", "requirement")
 load("@rules_symforce//symforce_tools:lcmgen.bzl", "cc_lcm_library")
 
-load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg")
+load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg", "lcm_pkg", "py_gen_pkg")
 
 
 COPTS = ["-std=c++17"]
@@ -118,13 +118,37 @@ cc_gen_pkg(
         name = "geo_package", 
         geo_types = GEO_TYPES,
 )
+
 cc_gen_pkg( 
         name = "cam_package", 
         geo_types = GEO_TYPES,
         cam_types = CAM_TYPES,
 )
+
+py_gen_pkg( 
+        name = "symforce_sym", 
+        geo_types = GEO_TYPES,
+        cam_types = CAM_TYPES,
+)
+
+cc_gen_pkg( 
+        name = "geo_factors", 
+        geo_types = GEO_TYPES,
+)
+
+cc_gen_pkg( 
+        name = "slam_factors", 
+        cam_types = CAM_TYPES,
+)
+
 cc_sym_util_pkg( 
         name = "sym_util_package", 
+        geo_types = GEO_TYPES, 
+        cam_types = CAM_TYPES,
+)
+
+lcm_pkg( 
+        name = "lcm_types", 
         geo_types = GEO_TYPES, 
         cam_types = CAM_TYPES,
 )
@@ -136,25 +160,23 @@ cc_library(
     name = "gen_lib",
     srcs = [
         ":geo_package",
+        ":geo_factors",
+        ":slam_factors",
         ":cam_package",
         ":sym_util_package",
     ],
     hdrs = [
         ":geo_package",
+        ":geo_factors",
+        ":slam_factors",
         ":cam_package",
         ":sym_util_package",
     ],
-#    hdrs =[":gen_codegen"],
-#    glob([
-#       "gen/**/*.cc",
-#    ]),
-#    hdrs =  glob([
-#        "gen/**/*.h",
-#      ]),
-    includes=[],
     deps = [
         ":geo_package",
+        ":geo_factors",
         ":cam_package",
+        ":slam_factors",
         ":sym_util_package",
         ":lcmtypes",
         "@eigen",
