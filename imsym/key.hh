@@ -27,3 +27,4 @@ struct key_t {
 }   // namespace imsym::key
 
 COMMON_STRUCT_HASH(imsym::key, key_t, letter, sub, super);
+

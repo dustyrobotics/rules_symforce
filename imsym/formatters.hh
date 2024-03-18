@@ -83,6 +83,21 @@ struct fmt::formatter<immer::flex_vector<long>> {
 };
 
 template<>
+struct fmt::formatter<immer::flex_vector<unsigned int>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::flex_vector<unsigned int>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+template<>
 struct fmt::formatter<immer::flex_vector<int>> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
@@ -106,6 +121,116 @@ struct fmt::formatter<immer::flex_vector<std::string>> {
 
     template<typename FormatContext>
     auto format(const immer::flex_vector<std::string>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+template<>
+struct fmt::formatter<immer::vector<float>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<float>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::vector<double>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<double>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::vector<size_t>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<size_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::vector<long>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<long>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::vector<unsigned int>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<unsigned int>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+template<>
+struct fmt::formatter<immer::vector<int>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<int>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<immer::vector<std::string>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<std::string>& v, FormatContext& ctx) {
         fmt::format_to(ctx.out(), "[");
         for (const auto& e : v) {
             fmt::format_to(ctx.out(), "{} ", e);
@@ -207,7 +332,6 @@ struct fmt::formatter<immer::flex_vector<imsym::key::key_t>> {
         return fmt::format_to(ctx.out(), "]");
     }
 };
-
 template<>
 struct fmt::formatter<const std::optional<long>&> {
     static constexpr auto parse(format_parse_context& ctx) {

@@ -194,3 +194,11 @@ COMMON_STRUCT(imsym::values, index_t, storage_dim, tangent_dim, entries);
 COMMON_STRUCT(imsym::values, valuesd_t, map, data);
 COMMON_STRUCT(imsym::values, valuesf_t, map, data);
 
+inline auto to_string(const std::pair<imsym::key::key_t, imsym::values::index_entry_t>& e)
+    -> const std::string {
+    return "pair,index_entry_t";
+};
+inline auto to_string(const imsym::values::index_entry_t& e) -> const std::string {
+    return "index_entry_t";
+};
+
