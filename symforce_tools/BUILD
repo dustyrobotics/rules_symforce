@@ -11,6 +11,7 @@ py_binary(
     main = "generate_gen.py",
     deps = [
         ":codegen_utils",
+        requirement("click"),
     ],
 )
 
@@ -21,6 +22,8 @@ py_binary(
     main = "compiler.py",
     deps = [
         ":codegen_utils",
+        "@symforce_repo//:symforce_sym",
+        requirement("click"),
     ],
 )
 

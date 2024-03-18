@@ -7,8 +7,9 @@ numpy==1.23.0
 ply==3.11
 six==1.16.0
 skymarshal==0.9.0
-symforce==0.9.0
-symforce-sym==0.9.0
+#symforce==0.9.0
+#symforce-sym==0.9.0
+#symengine==0.11.0
 black==22.6.0
 scipy==1.9.0
 clang-format==14.0.6

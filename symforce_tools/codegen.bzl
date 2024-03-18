@@ -78,7 +78,8 @@ def cc_symforce_factor(name,
                         function_generator = None, 
                         arguments = [], 
                         output_names = None, 
-                        deps = [],
+                        cc_deps = [],
+                        py_deps = [],
                         tags=[] ):
         
         if (function and function_generator):
@@ -109,7 +110,7 @@ def cc_symforce_factor(name,
                         "@symforce_repo//:py",
                         "@symforce_repo//:symforce_sym",
                         requirement("sympy"),
-                        ],
+                        ] + py_deps,
                 tags = tags,
                 visibility = ["//visibility:public"],
         )
@@ -117,7 +118,7 @@ def cc_symforce_factor(name,
         native.cc_library(
             name = name,
             hdrs = [output_residual_cpp, output_factor_cpp],
-            deps = ["@eigen", "@symforce_repo//:symforce"] + deps,
+            deps = ["@eigen", "@symforce_repo//:symforce"] + cc_deps,
             visibility = ["//visibility:public"],
             tags = tags,
         )

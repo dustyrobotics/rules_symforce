@@ -76,8 +76,18 @@ py_library(
      ]),
     deps = [
         requirement("sympy"),
+        requirement("numpy"),
         requirement("typing-extensions"),
     ],
+)
+
+# the python bindings all filled out with generated types as well
+py_library(
+        name = "symforce_python",
+        deps = [
+            ":py",
+            ":symforce_sym",
+        ],
 )
 
 # all the registered GEO TYPES
@@ -226,7 +236,6 @@ cc_library(
     copts=COPTS,
 )
 
-
 cc_library(
     name = "sparse_cholesky",
     srcs = glob([
@@ -256,18 +265,6 @@ cc_library(
 #        ],
 #)
 
-# run all codegen
-# creates the gen/ directory
-#py_binary(
-#    name = "generate_gen",
-#    srcs = ["generate_gen.py"],
-#    main = "generate_gen.py",
-#    deps = [
-#        ":py",
-#        ":backend_configs",
-#    ],
-#)
-#
 #py_library(
 #    name = "skymarshal",
 #    srcs = glob(["third_party/skymarshal/**/*.py"]),
@@ -281,7 +278,7 @@ cc_library(
 #    ],
 #    data = glob(["third_party/skymarshal/**"])
 #)
-#
+
 #py_binary(
 #    name = "skymarshalpy",
 #    srcs = ["third_party/skymarshal/skymarshal/__main__.py"],

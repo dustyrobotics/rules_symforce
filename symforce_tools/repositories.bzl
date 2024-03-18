@@ -8,6 +8,11 @@ def symforce_deps():
         build_file = "@rules_symforce//symforce_tools:BUILD.symforce",
         path = "/home/asa/sbox/symforce"
     )
+    native.new_local_repository(
+        name = "symengine_repo",
+        build_file = "@rules_symforce//symengine_tools:BUILD.symengine",
+        path = "/home/asa/sbox/symforce/third_party/symengine"
+    )
     #maybe(
     #    new_git_repository,
     #    name = "symforce",

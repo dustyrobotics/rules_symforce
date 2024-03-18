@@ -110,10 +110,10 @@ _gen_sym_geo_resource = rule(
 _gen_sym_package = rule(
     attrs = {
         "geo_types": attr.string_list(
-                doc = "The types to generate c++ for",
+                doc = "The geo types to generate c++ for",
         ),        
         "cam_types": attr.string_list(
-                doc = "The types to generate c++ for",
+                doc = "The camera types to generate c++ for",
         ),
         "compiler": attr.label(
             executable = True,
