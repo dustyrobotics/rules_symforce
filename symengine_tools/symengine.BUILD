@@ -202,7 +202,9 @@ cc_library(name="catch",
 
 cc_test(
     name = "test",
-    srcs=[
+    srcs = [        
+        "symengine/tests/basic/test_sets.cpp",          
+        "symengine/tests/basic/test_subs.cpp",
         "symengine/tests/basic/test_as_numer_denom.cpp",
         "symengine/tests/basic/test_basic.cpp", 
         "symengine/tests/basic/test_cse.cpp",
@@ -227,8 +229,6 @@ cc_test(
         #"symengine/tests/basic/test_series_expansion_UP.cpp", uses piranha
         #"symengine/tests/basic/test_series_expansion_URatP.cpp", uses piranha
         #"symengine/tests/basic/test_series_expansion_URatF.cpp", # is flint. ignoring
-        "symengine/tests/basic/test_sets.cpp",          
-        "symengine/tests/basic/test_subs.cpp",
     ],
     deps=[
         ":symengine",
@@ -236,8 +236,6 @@ cc_test(
     ],
     linkstatic = True,
 )
- 
-
 
 # enable some benchmarks
 benchmark("add1")
