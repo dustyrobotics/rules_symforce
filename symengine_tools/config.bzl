@@ -83,3 +83,17 @@ _teuchos_config = rule(
         "output": attr.output(mandatory = True),
     },
 )
+
+
+def benchmark(name, hdrs = [], srcs = []):
+    return native.cc_test(
+        name = name,
+        srcs = ["benchmarks/"+name+".cpp"],
+        deps = [":symengine",":bench_lib"],
+        linkstatic = True,
+        tags = ["benchmark"],
+    )
+
+
+
+
