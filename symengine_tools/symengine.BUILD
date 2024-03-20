@@ -1,16 +1,11 @@
 package(default_visibility = ["//visibility:public"])
 
-load("@rules_symforce//symengine_tools:config.bzl", "symengine_config", "benchmark")
+load("@rules_symforce//symengine_tools:config.bzl", "symengine_config", "benchmark", "symengine_test")
 
 symengine_config(
      name="config",
      template = "symengine/symengine_config.h.in",
      output = "symengine/symengine_config.h",
-)
-
-filegroup(
-    name="config_template",
-    srcs = ["symengine/symengine_config.h.in"],
 )
 
 COPTS = [   
@@ -103,6 +98,8 @@ cc_library(
 "symengine/numer_denom.cpp",
 ],
         srcs = [
+"symengine/numer_denom.cpp",
+"symengine/as_real_imag.cpp",
 "symengine/mp_wrapper.cpp",
 "symengine/add.cpp",
 "symengine/basic.cpp",
@@ -158,7 +155,7 @@ cc_library(
 "symengine/symbol.cpp",
 "symengine/symengine_rcp.cpp",
 "symengine/visitor.cpp",
-#"symengine/test_visitors.cpp",
+"symengine/test_visitors.cpp",
         ]
         +["symengine/symengine_config.h"],
    includes = [".","symengine"],
@@ -169,10 +166,14 @@ cc_library(
         # try static
         #        'SYMENGINE_STATIC_DEFINE=""',
         'SYMENGINE_EXPORT=""',
+        "__extern_always_inline=inline",
         #        'SYMENGINE_NO_EXPORT=""',
    ],
    copts=COPTS,
-   linkopts=["-lgmp"] # find and compile this statically?
+   linkopts=["-lgmp",
+                "-Wl,--exclude-libs,ALL",
+                "-Wl,--allow-multiple-definition"
+                ],
 )
 
 cc_library(name="bench_lib",
@@ -200,42 +201,32 @@ cc_library(name="catch",
    ],
 )
 
-cc_test(
-    name = "test",
-    srcs = [        
-        "symengine/tests/basic/test_sets.cpp",          
-        "symengine/tests/basic/test_subs.cpp",
-        "symengine/tests/basic/test_as_numer_denom.cpp",
-        "symengine/tests/basic/test_basic.cpp", 
-        "symengine/tests/basic/test_cse.cpp",
-        "symengine/tests/basic/test_functions.cpp",
-        "symengine/tests/basic/test_integer_class.cpp",
-        "symengine/tests/basic/test_nan.cpp",
-        "symengine/tests/basic/test_parser.cpp",
-        "symengine/tests/basic/test_rational.cpp",
-        "symengine/tests/basic/test_series.cpp",
-        "symengine/tests/basic/test_series_generic.cpp",
-        "symengine/tests/basic/test_solve.cpp",
-        "symengine/tests/basic/test_test_visitors.cpp",
-        "symengine/tests/basic/test_arit.cpp",
-        "symengine/tests/basic/test_as_real_imag.cpp",   
-        "symengine/tests/basic/test_count_ops.cpp", 
-        "symengine/tests/basic/test_fields.cpp",
-        "symengine/tests/basic/test_infinity.cpp",
-        "symengine/tests/basic/test_integer.cpp",      
-        "symengine/tests/basic/test_number.cpp",
-        "symengine/tests/basic/test_poly.cpp",
-        "symengine/tests/basic/test_relationals.cpp",
-        #"symengine/tests/basic/test_series_expansion_UP.cpp", uses piranha
-        #"symengine/tests/basic/test_series_expansion_URatP.cpp", uses piranha
-        #"symengine/tests/basic/test_series_expansion_URatF.cpp", # is flint. ignoring
-    ],
-    deps=[
-        ":symengine",
-        ":catch",
-    ],
-    linkstatic = True,
-)
+symengine_test(group="basic", name="test_sets")
+symengine_test(group="basic", name="test_subs")
+symengine_test(group="basic", name="test_as_numer_denom")
+symengine_test(group="basic", name="test_basic")
+symengine_test(group="basic", name="test_cse")
+symengine_test(group="basic", name="test_functions")
+symengine_test(group="basic", name="test_integer_class")
+symengine_test(group="basic", name="test_nan")
+symengine_test(group="basic", name="test_parser")
+symengine_test(group="basic", name="test_rational")
+symengine_test(group="basic", name="test_series")
+symengine_test(group="basic", name="test_series_generic")
+symengine_test(group="basic", name="test_solve")
+symengine_test(group="basic", name="test_test_visitors")
+symengine_test(group="basic", name="test_arit")
+symengine_test(group="basic", name="test_as_real_imag")
+symengine_test(group="basic", name="test_count_ops")
+symengine_test(group="basic", name="test_fields")
+symengine_test(group="basic", name="test_infinity")
+symengine_test(group="basic", name="test_integer")
+symengine_test(group="basic", name="test_number")
+symengine_test(group="basic", name="test_poly")
+symengine_test(group="basic", name="test_relationals")
+
+
+
 
 # enable some benchmarks
 benchmark("add1")

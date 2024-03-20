@@ -78,6 +78,7 @@ py_library(
         requirement("sympy"),
         requirement("numpy"),
         requirement("typing-extensions"),
+        "@symenginepy",
     ],
 )
 
@@ -87,6 +88,7 @@ py_library(
         deps = [
             ":py",
             ":symforce_sym",
+            "@symenginepy",
         ],
 )
 

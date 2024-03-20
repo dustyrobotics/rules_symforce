@@ -13,16 +13,16 @@ def symforce_deps():
         build_file = "@rules_symforce//symengine_tools:symengine.BUILD",
         path = "/home/asa/sbox/symforce/third_party/symengine"
     )
-    native.new_local_repository(
+    native.local_repository(
         name = "symenginepy",
-        build_file = "@rules_symforce//symengine_tools:symenginepy.BUILD",
+        #build_file = "@rules_symforce//symengine_tools:symenginepy.BUILD",
         path = "/home/asa/sbox/symforce/third_party/symenginepy"
     )
     new_git_repository(
         name = "cython",
         remote = "https://github.com/cython/cython.git",
-        #tag = "3.0.9",
-        commit = "31d4058ab2bd3c6a6fa25197ef4fc6ac62a2d95b"
+        tag = "0.29.37.1",
+
     )
     native.new_local_repository(
         name = "catch1",

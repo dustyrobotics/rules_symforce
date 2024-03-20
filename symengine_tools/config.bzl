@@ -54,35 +54,47 @@ _symengine_config = rule(
     },
 )
 
-def teuchos_config(**kwargs):
-    _teuchos_config(
+def symenginepy_config(**kwargs):
+    _symenginepy_config(
         **kwargs
     )
 
-def _teuchos_config_impl(ctx):
+def _symenginepy_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file.template,
         output = ctx.outputs.output,
         substitutions = {
-            "#cmakedefine HAVE_GCC_ABI_DEMANGLE": "",
-            "#cmakedefine HAVE_TEUCHOS_DEBUG_RCP_NODE_TRACING": "",
-            "#cmakedefine HAVE_TEUCHOS_DEBUG": "",
-            "#cmakedefine HAVE_TEUCHOS_LINK": "",
-            "#cmakedefine HAVE_TEUCHOS_BFD": "",
-            "#cmakedefine HAVE_TEUCHOS_EXECINFO": "",
+            "${HAVE_SYMENGINE_MPFR}" : "False",
+            "${HAVE_SYMENGINE_MPC}" : "False",
+            "${HAVE_SYMENGINE_PIRANHA}" : "False",
+            "${HAVE_SYMENGINE_FLINT}" : "False",
+            "${HAVE_SYMENGINE_LLVM}" : "False",
+            "${HAVE_SYMENGINE_LLVM_LONG_DOUBLE}" : "False",
         },
     )
 
-_teuchos_config = rule(
-    implementation = _teuchos_config_impl,
+_symenginepy_config = rule(
+    implementation = _symenginepy_impl,
     attrs = {
         "template": attr.label(
-            default = "symengine/utilities/teuchos/Teuchos_config.h.in",
+            default = "symengine/lib/config.pxi.in",
             allow_single_file = True,
         ),
         "output": attr.output(mandatory = True),
     },
 )
+
+def symengine_test(name,
+                group="basic"):
+        native.cc_test(
+                name = name,
+                srcs = ["symengine/tests/" + group + "/" + name + ".cpp"],
+                deps = [
+                        ":symengine",
+                        ":catch",
+                ],
+                linkstatic = True,
+        )
 
 
 def benchmark(name, hdrs = [], srcs = []):
@@ -91,7 +103,8 @@ def benchmark(name, hdrs = [], srcs = []):
         srcs = ["benchmarks/"+name+".cpp"],
         deps = [":symengine",":bench_lib"],
         linkstatic = True,
-        tags = ["benchmark"],
+        tags = ["benchmark","manual"],
+
     )
 
 
