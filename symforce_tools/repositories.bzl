@@ -8,7 +8,7 @@ def symforce_local_deps(root):
     native.new_local_repository(
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
-        path = root + "/symforce_upstream"
+        path = root + "/symforce"
     )
     native.new_local_repository(
         name = "symengine_repo",
