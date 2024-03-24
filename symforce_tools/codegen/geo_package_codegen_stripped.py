@@ -13,10 +13,10 @@ import symforce.symbolic as sf
 from symforce import logger
 from symforce import python_util
 from symforce import typing as T
+
 from symforce.codegen import Codegen
 from symforce.codegen import CodegenConfig
-#from symforce.codegen import codegen_util
-#from symforce.codegen import lcm_types_codegen
+
 from symforce.codegen import template_util
 from symforce.codegen.ops_codegen_util import make_group_ops_funcs
 from symforce.codegen.ops_codegen_util import make_lie_group_ops_funcs
@@ -24,7 +24,9 @@ from symforce.codegen.ops_codegen_util import make_lie_group_ops_funcs
 from rules_symforce.symforce_tools.codegen.backends.cpp.cpp_config import CppConfig
 from rules_symforce.symforce_tools.codegen.backends.python.python_config import PythonConfig
 
-def geo_class_common_data(cls: T.Type, config: CodegenConfig) -> T.Dict[str, T.Any]:
+# need to make the python sym package before any other packages can be generated
+
+def geo_class_common_data(cls: T.Type, config) -> T.Dict[str, T.Any]:
     """
     Data for template generation of this class. Contains all useful info common
     to all class-specific templates.
@@ -189,7 +191,7 @@ def _custom_generated_methods(config: CodegenConfig) -> T.Dict[T.Type, T.List[Co
 
 def generate(
              GEO_TYPES: T.Sequence[T.Type], 
-             config: CodegenConfig = CppConfig, 
+             config: CodegenConfig = PythonConfig, 
              output_dir: Path = None) -> Path:
     """
     Generate the geo package for the given language.

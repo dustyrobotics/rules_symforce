@@ -1,4 +1,4 @@
-# an imple that mirrors the interface of the generate_gen python tool
+# an impl that mirrors the interface of the generate_gen python tool
 
 def _generate_gen_impl(ctx):
     subcommand = ctx.label.name.replace("_", "-")
@@ -54,7 +54,7 @@ def _generate_py_gen_impl(ctx):
         outputs = [output_dir],
         arguments = arguments,
         mnemonic = "SymforceCompile",
-        progress_message = "Generating symforce package...",
+        progress_message = "Generating python symforce package...",
         executable = ctx.executable.compiler,
     )
 
@@ -134,8 +134,8 @@ _gen_py_sym_package = rule(
         ),
         "compiler": attr.label(
             executable = True,
-            cfg = "exec",
-            default = Label("@rules_symforce//symforce_tools:generate_gen"),
+            cfg = "host",
+            default = Label("@rules_symforce//symforce_tools:generate_gen_no_sym"),
         ),
     },
     implementation = _generate_py_gen_impl,

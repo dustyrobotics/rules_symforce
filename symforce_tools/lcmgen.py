@@ -9,7 +9,6 @@ import argparse
 import six
 import os
 
-
 from skymarshal.emit_cpp import SkymarshalCpp
 from skymarshal.emit_djinni import SkymarshalDjinni
 from skymarshal.emit_proto import SkymarshalProto

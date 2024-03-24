@@ -2,7 +2,6 @@ package(default_visibility = ["//visibility:public"])
 
 load("@symforce_requirements//:requirements.bzl", "requirement")
 load("@rules_symforce//symforce_tools:lcmgen.bzl", "cc_lcm_library")
-
 load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg", "lcm_pkg", "py_gen_pkg")
 
 
@@ -11,7 +10,10 @@ COPTS = ["-std=c++17"]
 cc_library(
     name = "skymarshal_core",
     hdrs = [
-       "third_party/skymarshal/include/lcm/lcm_coretypes.h",
+        "third_party/skymarshal/include/lcm/lcm_cpptypes.hpp",
+        "third_party/skymarshal/include/lcm/lcm_coretypes.h",
+        "third_party/skymarshal/include/lcm/lcm_reflection_eigen.hpp",
+        "third_party/skymarshal/include/lcm/lcm_reflection.hpp",
       ],
     defines=["SKYMARSHAL_PRINTING_ENABLED"],
     includes=["third_party/skymarshal/include"],
@@ -83,8 +85,9 @@ py_library(
 )
 
 # the python bindings all filled out with generated types as well
+# with sym
 py_library(
-        name = "symforce_python",
+        name = "symforce_python_with_sym",
         deps = [
             ":py",
             ":symforce_sym",
@@ -105,6 +108,18 @@ CAM_TYPES = [
         'symforce.cam.spherical_camera_cal.SphericalCameraCal']
 
 # run codegen generators for the gen/ directory
+
+# this generates the symforce_sym package
+# it needs access to an interpreter that doesn't have sym already
+# all other gen packages use this as a dep.
+# it should be setup first
+py_gen_pkg( 
+        name = "symforce_sym", 
+        geo_types = GEO_TYPES,
+        cam_types = CAM_TYPES,
+)
+
+# the folowing two are the cc versions
 cc_gen_pkg( 
         name = "geo_package", 
         geo_types = GEO_TYPES,
@@ -116,11 +131,7 @@ cc_gen_pkg(
         cam_types = CAM_TYPES,
 )
 
-py_gen_pkg( 
-        name = "symforce_sym", 
-        geo_types = GEO_TYPES,
-        cam_types = CAM_TYPES,
-)
+
 
 cc_gen_pkg( 
         name = "geo_factors", 
@@ -267,27 +278,27 @@ cc_library(
 #        ],
 #)
 
-#py_library(
-#    name = "skymarshal",
-#    srcs = glob(["third_party/skymarshal/**/*.py"]),
-#    imports = ["third_party"],
-#    deps = [
-#            requirement("argh"),
-#            requirement("jinja2"),
-#            requirement("numpy"),
-#            requirement("ply"),
-#            requirement("six"),
-#    ],
-#    data = glob(["third_party/skymarshal/**"])
-#)
+py_library(
+    name = "skymarshal",
+    srcs = glob(["third_party/skymarshal/skymarshal/**/*.py"]),
+    imports = ["third_party/skymarshal"],
+    deps = [
+            requirement("argh"),
+            requirement("jinja2"),
+            requirement("numpy"),
+            requirement("ply"),
+            requirement("six"),
+    ],
+    data = glob(["third_party/skymarshal/**"])
+)
 
-#py_binary(
-#    name = "skymarshalpy",
-#    srcs = ["third_party/skymarshal/skymarshal/__main__.py"],
-#    main = "third_party/skymarshal/skymarshal/__main__.py",
-#    deps = [
-#            ":skymarshal",
-#    ],
-#)
+py_binary(
+    name = "skymarshalpy",
+    srcs = ["third_party/skymarshal/skymarshal/__main__.py"],
+    main = "third_party/skymarshal/skymarshal/__main__.py",
+    deps = [
+            ":skymarshal",
+    ],
+)
 
 
