@@ -4,6 +4,7 @@ load("@symforce_requirements//:requirements.bzl", "requirement")
 load("@rules_symforce//symforce_tools:lcmgen.bzl", "cc_lcm_library")
 load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg", "lcm_pkg", "py_gen_pkg")
 
+exports_files(["dev_requirements.txt"])
 
 COPTS = ["-std=c++17"]
 
