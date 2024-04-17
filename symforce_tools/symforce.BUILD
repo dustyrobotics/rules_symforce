@@ -78,6 +78,7 @@ py_library(
     deps = [
         requirement("sympy"),
         requirement("numpy"),
+        requirement("jinja2"),
         requirement("typing-extensions"),
         "@symenginepy",
     ],

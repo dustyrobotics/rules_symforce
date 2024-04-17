@@ -95,6 +95,7 @@ py_library(
         ":backend_configs",
         requirement("clang-format"),
         requirement("typing-extensions"),
+        requirement("jinja2"),
     ],
     data = [
         ":lcm_templates"
