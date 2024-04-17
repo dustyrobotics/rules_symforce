@@ -57,7 +57,6 @@ inline auto create_index(const values_t<Scalar>& values,
         if (val == nullptr) {
             // REALLY DONT WANT THIS TO THROW!!
             throw std::runtime_error("Tried to create index for key not in values");
-            //     fmt::format("Tried to create index for key {} not in values", key));
         }
 
         const auto entry = *val;

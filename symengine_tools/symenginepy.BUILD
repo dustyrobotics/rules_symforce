@@ -71,8 +71,6 @@ py_library(
         deps = [
                 ":lib",
         ],
-        data = [
-        ],
 )
 
 py_test(
@@ -82,4 +80,3 @@ py_test(
             ":symenginepy",
         ],
 )
-

@@ -55,6 +55,14 @@ inline auto to(const immer::vector<imsym::key::key_t>& other) -> std::vector<sym
     return out;
 }
 
+inline auto to(const std::vector<sym::Key>& other) -> immer::vector<imsym::key::key_t> {
+    auto out = immer::vector<imsym::key::key_t>{};
+    for (const auto k : other) {
+        out = std::move(out).push_back(to(k));
+    }
+    return out;
+}
+
 }   // namespace imsym::key
 
 namespace imsym::values {
@@ -82,10 +90,8 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
                   "Calling Values.Set on mismatched scalar type.");
 
     const auto type = sym::StorageOps<T>::TypeEnum();
-    // bool is_new = false;
 
     if (!values.map.count(key)) {
-        // is_new = true;
         auto entry = values::index_entry_t{};
         entry.key = key;
         entry.type = type;
@@ -104,6 +110,7 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
 
     } else {
         if (values.map.at(key).type != type) {
+            // TODO make monadic with expected{}
             // TODO(hayk): Return an error enum instead of an exception?
             throw std::runtime_error("Calling Set on the wrong value type.");
         }
@@ -157,7 +164,7 @@ template<typename Scalar>
 inline auto clone(const values_t<Scalar>& other) -> sym::Values<Scalar> {
     auto values = sym::Values<Scalar>{};
 
-    // TODO really just need to be able to set they map and data values directly
+    // TODO really just need to be able to set the map and data values directly
     // here we set the values one at a time
     for (const auto& entry : create_index(other, keys<Scalar>(other)).entries) {
         const auto& key = entry.key;

@@ -9,7 +9,7 @@ def _impl(ctx):
 
     files = ctx.attr.src[DefaultInfo].files.to_list()
     for file in files:
-        print(file.path)
+        #print(file.path)
         arguments.append(file.path)# the lcm file
 
     arguments.extend(["--verbose"])

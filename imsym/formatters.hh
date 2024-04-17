@@ -11,6 +11,7 @@
 //
 #include "imsym/key.hh"
 #include "imsym/values.hh"
+#include "imsym/values_ops.hh"
 
 #include <fmt/core.h>
 
@@ -257,6 +258,7 @@ struct fmt::formatter<imsym::key::key_t> {
         return fmt::format_to(ctx.out(), "{} sub {} super {}", k.letter, k.sub, k.super);
     }
 };
+
 //
 template<>
 struct fmt::formatter<imsym::values::index_entry_t> {
@@ -300,17 +302,16 @@ struct fmt::formatter<imsym::values::valuesd_t> {
     }
 
     template<typename FormatContext>
-    auto format(const imsym::values::valuesd_t& values, FormatContext& ctx) {
+    auto format(const imsym::values::valuesd_t& vals, FormatContext& ctx) {
         fmt::format_to(ctx.out(), "values\n");
-
         const auto full_index =
-            create_index(values, keys<double>(values.map, true));   // sort by offset
-                                                                    //
+            create_index(vals, keys<double>(vals.map, true));   // sort by offset
+                                                                //
         for (const auto& entry : full_index.entries) {
             fmt::format_to(ctx.out(),
                            "\n\t{} {}",
                            entry,
-                           values.data.drop(entry.offset).take(entry.storage_dim));
+                           vals.data.drop(entry.offset).take(entry.storage_dim));
         }
 
         return ctx.out();
@@ -332,6 +333,23 @@ struct fmt::formatter<immer::flex_vector<imsym::key::key_t>> {
         return fmt::format_to(ctx.out(), "]");
     }
 };
+
+template<>
+struct fmt::formatter<immer::vector<imsym::key::key_t>> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const immer::vector<imsym::key::key_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
 template<>
 struct fmt::formatter<const std::optional<long>&> {
     static constexpr auto parse(format_parse_context& ctx) {

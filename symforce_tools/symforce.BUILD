@@ -4,8 +4,6 @@ load("@symforce_requirements//:requirements.bzl", "requirement")
 load("@rules_symforce//symforce_tools:lcmgen.bzl", "cc_lcm_library")
 load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg", "lcm_pkg", "py_gen_pkg")
 
-exports_files(["dev_requirements.txt"])
-
 COPTS = ["-std=c++17"]
 
 cc_library(
@@ -88,7 +86,7 @@ py_library(
 # the python bindings all filled out with generated types as well
 # with sym
 py_library(
-        name = "symforce_python_with_sym",
+        name = "symforce_python",
         deps = [
             ":py",
             ":symforce_sym",
@@ -284,7 +282,6 @@ py_library(
     srcs = glob(["third_party/skymarshal/skymarshal/**/*.py"]),
     imports = ["third_party/skymarshal"],
     deps = [
-            requirement("argh"),
             requirement("jinja2"),
             requirement("numpy"),
             requirement("ply"),

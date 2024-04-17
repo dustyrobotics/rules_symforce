@@ -94,6 +94,7 @@ py_library(
         "@symforce_repo//:py",
         ":backend_configs",
         requirement("clang-format"),
+        requirement("typing-extensions"),
     ],
     data = [
         ":lcm_templates"
