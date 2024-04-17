@@ -79,6 +79,7 @@ py_library(
         requirement("sympy"),
         requirement("numpy"),
         requirement("jinja2"),
+#        requirement("ruff"),
         requirement("typing-extensions"),
         "@symenginepy",
     ],
