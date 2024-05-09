@@ -11,7 +11,7 @@
 
 namespace imsym {
 
-inline auto to_dense_matrix(const Eigen::MatrixXd& m) -> dense_matrix_t {
+inline auto to_imsym(const Eigen::MatrixXd& m) -> dense_matrix_t {
     dense_matrix_t out;
     out.size = {.row = m.rows(), .col = m.cols()};
     for (int col = 0; col < m.cols(); col++) {
@@ -36,17 +36,18 @@ inline auto to_eigen(const dense_matrix_t& m) -> Eigen::MatrixXd {
 inline auto to_imsym(std::unordered_map<sym::Key, Eigen::MatrixXd> covariances) {
     auto out = immer::map<imsym::key::key_t, dense_matrix_t>{};
     for (const auto& [k, v] : covariances) {
-        out = std::move(out).set(imsym::key::to(k), to_dense_matrix(v));
+        out = std::move(out).set(imsym::key::to(k), to_imsym(v));
     }
     return out;
 };
 
-inline auto to_imsym(const Eigen::SparseMatrix<double>& sparse_matrix) -> sparse_matrix_t {
+template<typename Scalar>
+inline auto to_imsym(const Eigen::SparseMatrix<Scalar>& sparse_matrix) -> sparse_matrix_t {
     sparse_matrix_t out;
     out.size = {sparse_matrix.rows(), sparse_matrix.cols()};
 
     for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
-        for (Eigen::SparseMatrix<double>::InnerIterator it(sparse_matrix, k); it; ++it) {
+        for (typename Eigen::SparseMatrix<Scalar>::InnerIterator it(sparse_matrix, k); it; ++it) {
             long row = it.row();
             long col = it.col();
             double value = it.value();
@@ -59,6 +60,20 @@ inline auto to_imsym(const Eigen::SparseMatrix<double>& sparse_matrix) -> sparse
     return out;
 };
 
+template<typename Scalar>
+inline auto to_imsym_matrix(const Eigen::Map<const Eigen::SparseMatrix<Scalar>>& sparse_matrix)
+    -> sparse_matrix_t {
+    const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
+    return to_imsym(m);
+};
+
+template<typename Scalar>
+inline auto to_imsym_matrix(const Eigen::Map<const Eigen::MatrixX<Scalar>>& dense_matrix)
+    -> dense_matrix_t {
+    const Eigen::MatrixX<Scalar>& m = dense_matrix;
+    return to_imsym(m);
+};
+
 inline auto to_imsym(const Eigen::VectorXd& v) {
     return immer::vector<double>{v.begin(), v.end()};
 };
@@ -67,9 +82,11 @@ inline auto to_imsym(const Eigen::VectorXi& v) {
     return immer::vector<size_t>{v.begin(), v.end()};
 };
 
+/*
 inline auto to_imsym(const ::eigen_lcm::MatrixXd& v) {
-    return to_dense_matrix(v);
+    return to_imsym(v);
 };
+*/
 
 // could be sparse or dense iteration
 inline auto to_imsym(const sym::optimization_iteration_t& iter) -> optimization_iteration_t {
@@ -84,8 +101,7 @@ inline auto to_imsym(const sym::optimization_iteration_t& iter) -> optimization_
         .update = to_imsym(iter.update),
         // .values = imsym::values::clone(iter.values),
         .residuals = to_imsym(iter.residual),
-        .jacobian_values =
-            to_imsym(iter.jacobian_values),   // should switch between sparse and dense matrices?
+        //.jacobian_values = to_imsym(iter.JacobianValues()),
     };
 };
 
@@ -123,24 +139,25 @@ inline auto to_imsym(const sym::optimization_status_t& status) -> optimization_s
 };
 
 template<typename MatrixType>
-inline auto to_imsym(const sym::OptimizationStats<MatrixType>& opt_stats) -> optimization_stats_t {
-    auto iterations = [](auto stats) {
-        auto out = immer::vector<optimization_iteration_t>{};
-        for (const auto& iter : stats.iterations) {
-            out = std::move(out).push_back(to_imsym(iter));
-        }
-        return out;
-    };
+inline auto to_imsym_stats(const sym::OptimizationStats<MatrixType>& opt_stats)
+    -> optimization_stats_t {
+    auto iterations = immer::vector<optimization_iteration_t>{};
+    for (const auto& iter : opt_stats.iterations) {
+        auto jacobian = to_imsym_matrix(opt_stats.JacobianView(iter));
+        auto imsym_iter = to_imsym(iter);
+        imsym_iter.jacobian = jacobian;
+        iterations = std::move(iterations).push_back(imsym_iter);
+    }
 
     return ::imsym::optimization_stats_t{
-        .iterations = iterations(opt_stats),
+        .iterations = iterations,
         .best_index = opt_stats.best_index,
         .status = to_imsym(opt_stats.status),
         .failure_reason = opt_stats.failure_reason,
         .best_linearization = to_linearization(opt_stats.best_linearization),
-        .jacobian_sparsity = to_imsym(opt_stats.jacobian_sparsity),
+        //.jacobian_sparsity = to_imsym(opt_stats.jacobian_sparsity),
         .linear_solver_ordering = to_imsym(opt_stats.linear_solver_ordering),
-        .cholesky_factor_sparsity = to_imsym(opt_stats.cholesky_factor_sparsity),
+        //.cholesky_factor_sparsity = to_imsym(opt_stats.cholesky_factor_sparsity),
     };
 };
 

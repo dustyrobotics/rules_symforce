@@ -19,8 +19,8 @@
 #include "common/cereal/immer_map.hh"
 #include "common/cereal/json.hh"
 #include "common/cereal/optional_nvp.hh"
+#include "common/cereal/variant_with_name.hh"
 #include "common/enum.hh"
-#include "common/formatter/std.hh"
 #include "common/struct.hh"
 
 #include <cereal/types/optional.hpp>
@@ -96,7 +96,8 @@ struct optimization_iteration_t {
     immer::vector<double> residuals;
 
     // The problem jacobian exactly if dense, or as CSC format sparse data column vector if sparse
-    matrix_t jacobian_values;
+    // either sparse or dense jacobian
+    matrix_t jacobian;
 };
 
 // The structure of a sparse matrix in CSC format, not including the numerical values
@@ -179,7 +180,7 @@ struct optimization_stats_t {
     /// otherwise default constructed.
     ///
     /// If using a dense linearization, only the shape field will be filled.
-    sparse_matrix_t jacobian_sparsity;
+    // sparse_matrix_t jacobian_sparsity;
 
     /// The permutation used by the linear solver
     ///
@@ -233,7 +234,7 @@ COMMON_STRUCT(imsym,
               update,
               values,
               residuals,
-              jacobian_values);
+              jacobian);   // full jacobian is here
 
 /*
 COMMON_ENUM(imsym,
@@ -250,7 +251,7 @@ COMMON_STRUCT(imsym,
               status,               //
               failure_reason,       //
               best_linearization,   //
-              jacobian_sparsity,    //
+              // jacobian_sparsity,    // jacobian is stored in each iteration directly
               linear_solver_ordering,
               cholesky_factor_sparsity);
 

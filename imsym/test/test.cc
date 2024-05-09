@@ -43,6 +43,8 @@ auto DefaultLmParams() -> sym::optimizer_params_t {
     sym::optimizer_params_t params{};
     params.iterations = 50;
     params.verbose = true;
+    params.debug_checks = true;
+    params.debug_stats = true;
     params.initial_lambda = 1.0;
     params.lambda_up_factor = 4.0;
     params.lambda_down_factor = 1 / 4.0;
@@ -702,22 +704,18 @@ TEST_CASE("conversion") {
 
     // Optimize
     sym::optimizer_params_t params = DefaultLmParams();
-    params.iterations = 50;
+    params.iterations = 4;
     params.include_jacobians = true;
     params.check_derivatives = true;
     params.early_exit_min_reduction = 0.0001;
 
+    //    SECTION("sparse") {
     sym::Optimizer<double> optimizer(params, factors, "sym::Optimize", {}, epsilon);
+    const auto& stats = optimizer.Optimize(values, -1, true);
+    spdlog::info("optimized sym values: {}", values);
 
-    // round trip through imsym
-    auto imsym_values = imsym::values::clone(values);
-    auto sym_values = imsym::values::clone(imsym_values);
-
-    const auto stats = optimizer.Optimize(sym_values);
-    spdlog::error("optimized sym values: {}", sym_values);
-
-    auto imstats = imsym::to_imsym(stats);
-    //
-    spdlog::error("optimized imsym values: {}", imstats.iterations.size());
+    auto imstats = imsym::to_imsym_stats(move(stats));
+    spdlog::info("sparse problem optimized imsym values: {}", common::to_json(imstats));
+    //    }
 }
 
