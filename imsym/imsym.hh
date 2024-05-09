@@ -5,10 +5,13 @@
  */
 
 #pragma once
-#include "imsym/key.hh"
-#include "imsym/values.hh"
-#include "imsym/values_ext_ops.hh"
-#include "imsym/values_ops.hh"
+#include "imsym/opt/interop.hh"
+#include "imsym/opt/key.hh"
+#include "imsym/opt/types.hh"
+#include "imsym/opt/values.hh"
 //
-#include "imsym/formatters.hh"
+#include "imsym/opt/formatters.hh"
+//
+#include "imsym/opt/values_ext_ops.hh"
+#include "imsym/opt/values_ops.hh"
 

@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "imsym/key.hh"
-#include "imsym/values.hh"
-#include "imsym/values_ops.hh"
+#include "imsym/opt/key.hh"
+#include "imsym/opt/values.hh"
+#include "imsym/opt/values_ops.hh"
 //
 #include <symforce/opt/key.h>
 #include <symforce/opt/values.h>

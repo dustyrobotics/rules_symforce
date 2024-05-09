@@ -54,6 +54,7 @@ auto DefaultLmParams() -> sym::optimizer_params_t {
     params.keep_max_diagonal_damping = false;
     params.diagonal_damping_min = 1e-6;
     params.enable_bold_updates = false;
+    params.lambda_update_type = sym::lambda_update_type_t::STATIC;
     return params;
 }
 
@@ -615,3 +616,108 @@ TEST_CASE("print with fmt") {
     spdlog::info("values_before_opt {}", values_before_opt);
     spdlog::info("values_before_opt {}", fmt::format("{}", values_before_opt));
 }
+
+TEST_CASE("conversion") {
+    const double epsilon = 1e-10;
+    const int num_keys = 10;
+
+    sym::Valuesd values;
+
+    // Costs
+    const double prior_start_sigma = 0.1;   // [rad]
+    const double prior_last_sigma = 0.1;    // [rad]
+    const double between_sigma = 1.0;       // [rad]
+
+    // Set points (doing 180 rotation and 5m translation to keep
+    // it hard)
+    const sym::Pose3d prior_start =
+        sym::Pose3d(sym::Rot3d::FromYawPitchRoll(0.0, 0.0, 0.0), Eigen::Vector3d::Zero());
+
+    const sym::Pose3d prior_last =
+        sym::Pose3d(sym::Rot3d::FromYawPitchRoll(M_PI, 0.0, 0.0), Eigen::Vector3d(5, 0, 0));
+
+    const auto create_prior_factor = [&epsilon](const sym::Key& key,
+                                                const sym::Pose3d& prior,
+                                                const double sigma) {
+        return sym::Factord::Jacobian(
+            [&prior, sigma, &epsilon](
+                const sym::Pose3d& pose, sym::Vector6d* const res, sym::Matrix66d* const jac) {
+                const sym::Matrix66d sqrt_info = sym::Vector6d::Constant(1 / sigma).asDiagonal();
+
+                sym::PriorFactorPose3<double>(pose, prior, sqrt_info, epsilon, res, jac);
+            },
+            {key});
+    };
+
+    // Add priors
+    std::vector<sym::Factord> factors;
+    factors.push_back(create_prior_factor({'P', 0}, prior_start, prior_start_sigma));
+    factors.push_back(create_prior_factor({'P', num_keys - 1}, prior_last, prior_last_sigma));
+
+    const auto create_position_prior_factor = [&epsilon](const sym::Key& key,
+                                                         const sym::Vector3d& prior,
+                                                         const double sigma) {
+        return sym::Factord::Jacobian(
+            [&prior, sigma, &epsilon](
+                const sym::Pose3d& pose, sym::Vector3d* const res, sym::Matrix36d* const jac) {
+                const sym::Matrix33d sqrt_info = sym::Vector3d::Constant(1 / sigma).asDiagonal();
+
+                sym::PriorFactorPose3Position<double>(pose, prior, sqrt_info, epsilon, res, jac);
+            },
+            {key});
+    };
+
+    // push the signal off to the left a bit
+    factors.push_back(create_position_prior_factor(
+        {'P', num_keys / 2}, Eigen::Vector3d{2.5, 1.0, 0.0}, prior_last_sigma));
+
+    // Add between factors in a chain
+    for (int i = 0; i < num_keys - 1; ++i) {
+        factors.push_back(sym::Factord::Jacobian(
+            [&between_sigma, &epsilon](const sym::Pose3d& a,
+                                       const sym::Pose3d& b,
+                                       sym::Vector6d* const res,
+                                       Eigen::Matrix<double, 6, 12>* const jac) {
+                const sym::Matrix66d sqrt_info =
+                    sym::Vector6d::Constant(1 / between_sigma).asDiagonal();
+
+                const sym::Pose3d a_T_b = sym::Pose3d::Identity();
+
+                sym::BetweenFactorPose3<double>(a, b, a_T_b, sqrt_info, epsilon, res, jac);
+            },
+            /* keys */ {{'P', i}, {'P', i + 1}}));
+    }
+
+    // Create initial values as random pertubations from the
+    // first prior
+    std::mt19937 gen(42);
+    for (int i = 0; i < num_keys; ++i) {
+        const sym::Pose3d value = prior_start.Retract(0.4 * sym::Random<sym::Vector6d>(gen));
+        values.Set<sym::Pose3d>({'P', i}, value);
+    }
+
+    spdlog::info("Initial values: {}", values);
+    spdlog::info("Prior on P0: {}", prior_start);
+    spdlog::info("Prior on P[-1]: {}", prior_last);
+
+    // Optimize
+    sym::optimizer_params_t params = DefaultLmParams();
+    params.iterations = 50;
+    params.include_jacobians = true;
+    params.check_derivatives = true;
+    params.early_exit_min_reduction = 0.0001;
+
+    sym::Optimizer<double> optimizer(params, factors, "sym::Optimize", {}, epsilon);
+
+    // round trip through imsym
+    auto imsym_values = imsym::values::clone(values);
+    auto sym_values = imsym::values::clone(imsym_values);
+
+    const auto stats = optimizer.Optimize(sym_values);
+    spdlog::error("optimized sym values: {}", sym_values);
+
+    auto imstats = imsym::to_imsym(stats);
+    //
+    spdlog::error("optimized imsym values: {}", imstats.iterations.size());
+}
+

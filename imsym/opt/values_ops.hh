@@ -12,7 +12,7 @@
 #include "common/struct.hh"
 #include "common/variant/match.hh"
 //
-#include "imsym/values.hh"
+#include "imsym/opt/values.hh"
 
 //
 #include <immer/flex_vector.hpp>

@@ -1,17 +1,9 @@
 #pragma once
 
-//
-#include <immer/flex_vector.hpp>
-#include <immer/map.hpp>
-#include <immer/vector.hpp>
-//
-#include "common/cereal/immer_flex_vector.hh"
-#include "common/cereal/immer_map.hh"
-#include "common/cereal/immer_vector.hh"
-//
-#include "imsym/key.hh"
-#include "imsym/values.hh"
-#include "imsym/values_ops.hh"
+#include "common/formatter/std.hh"
+#include "imsym/opt/key.hh"
+#include "imsym/opt/types.hh"
+#include "imsym/opt/values.hh"
 
 #include <fmt/core.h>
 
@@ -351,34 +343,35 @@ struct fmt::formatter<immer::vector<imsym::key::key_t>> {
 };
 
 template<>
-struct fmt::formatter<const std::optional<long>&> {
+struct fmt::formatter<immer::set<imsym::key::key_t>> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
     template<typename FormatContext>
-    auto format(const std::optional<long>& v, FormatContext& ctx) {
-        if (v) {
-            return fmt::format_to(ctx.out(), v.value());
-        } else {
-            return fmt::format_to(ctx.out(), "{}");
+    auto format(const immer::set<imsym::key::key_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "(");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{},", e);
         }
+        return fmt::format_to(ctx.out(), ")");
     }
 };
 
-template<typename T>
-struct fmt::formatter<const std::optional<T>&> {
+template<>
+struct fmt::formatter<imsym::detailed_internals_t> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
-    template<typename FormatContext, typename V, typename = std::enable_if_t<std::is_integral_v<T>>>
-    auto format(const std::optional<V>& v, FormatContext& ctx) {
-        if (v) {
-            return fmt::format_to(ctx.out(), v.value());
-        } else {
-            return fmt::format_to(ctx.out(), "{}");
-        }
+    template<typename FormatContext>
+    auto format(const imsym::detailed_internals_t& f, FormatContext& ctx) {
+        // should be automatic. iterate over the fields of the struct
+        return fmt::format_to(
+            ctx.out(),
+            "detailed_internals_t( covariances_by_key: {}, factor_residual_offsets: {}, opt_stats {})",
+            f.covariances_by_key,
+            f.factor_residual_offsets,
+            f.optimization_stats);
     }
 };
-

@@ -1,6 +1,8 @@
 
 import click
 
+from symforce_repo.symforce_sym_gen.python import sym
+
 import symforce
 symforce.set_epsilon_to_symbol()
 # required for codegenning out cpp code!!!
@@ -9,8 +11,6 @@ symforce.set_log_level("warning")
 from symforce import codegen
 
 from rules_symforce.symforce_tools.codegen.backends.cpp.cpp_config import CppConfig
-
-
 
 def write_function_to_disk(data, path):
     # generate the residual 
@@ -51,6 +51,7 @@ def generatefactor(basename,
                     output_residual_cpp, 
                     output_factor_cpp):
     print("Starting symforce factor codegen from {}".format(python_src))
+    from symforce_repo.symforce_sym_gen.python import sym
 
     FUNCTION = read_python_source(python_src, function_name)
 

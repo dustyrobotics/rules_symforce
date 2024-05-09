@@ -38,6 +38,10 @@ py_binary(
         "@symforce_repo//:symforce_sym",
         requirement("click"),
     ],
+    data = [
+        # process won't recognize these as python files, load as data
+        "@symforce_repo//:symforce_sym",
+    ],
 )
 
 py_binary(
