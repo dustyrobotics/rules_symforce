@@ -14,7 +14,6 @@ py_binary(
     deps = [
         ":codegen_utils",
         requirement("click"),
-        requirement("ruff"),
     ],
 )
 
@@ -25,7 +24,6 @@ py_binary(
     deps = [
         ":codegen_utils",
         requirement("click"),
-        requirement("ruff"),
         "@symforce_repo//:symforce_sym",
     ],
 )
