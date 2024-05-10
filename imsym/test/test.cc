@@ -714,7 +714,7 @@ TEST_CASE("conversion") {
     const auto& stats = optimizer.Optimize(values, -1, true);
     spdlog::info("optimized sym values: {}", values);
 
-    auto imstats = imsym::to_imsym_stats(move(stats));
+    auto imstats = imsym::to_imsym(move(stats));
     spdlog::info("sparse problem optimized imsym values: {}", common::to_json(imstats));
     //    }
 }

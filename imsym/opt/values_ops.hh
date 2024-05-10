@@ -13,7 +13,6 @@
 #include "common/variant/match.hh"
 //
 #include "imsym/opt/values.hh"
-
 //
 #include <immer/flex_vector.hpp>
 #include <immer/map.hpp>

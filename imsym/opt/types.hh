@@ -16,17 +16,19 @@
 #include <optional>
 #include <variant>
 //
+/*
 #include "common/cereal/immer_map.hh"
 #include "common/cereal/json.hh"
 #include "common/cereal/optional_nvp.hh"
 #include "common/cereal/variant_with_name.hh"
-#include "common/enum.hh"
+*/
 #include "common/struct.hh"
 
 #include <cereal/types/optional.hpp>
 #include <lager/extra/cereal/immer_map.hpp>
 #include <lager/extra/cereal/immer_vector.hpp>
-
+//
+#include "common/enum.hh"
 namespace imsym {
 
 using timestamp_t = size_t;
@@ -202,8 +204,6 @@ struct detailed_internals_t {
     // probably want to have a smaller subset of these for the last solved state, and the first
     // solved state computed always these versions would be for the full problem, and be expensive
     immer::map<imsym::key::key_t, dense_matrix_t> covariances_by_key;
-    // immer::vector<float> residuals;   // the best ones???
-    // sparse_matrix_t jacobian;
 
     // pair of residual index and dim of the factor residual block
     immer::vector<offset_t> factor_residual_offsets;

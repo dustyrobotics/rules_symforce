@@ -16,6 +16,7 @@ cc_library(
     deps = [
         "@automaton_common//motion",
         "@automaton_common//common",
+        "@automaton_common//common/formatter",
         "@automaton_common//common/immer",
         "@automaton_common//common/variant",
         "@automaton_common//common:cereal",

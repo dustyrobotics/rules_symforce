@@ -139,8 +139,7 @@ inline auto to_imsym(const sym::optimization_status_t& status) -> optimization_s
 };
 
 template<typename MatrixType>
-inline auto to_imsym_stats(const sym::OptimizationStats<MatrixType>& opt_stats)
-    -> optimization_stats_t {
+inline auto to_imsym(const sym::OptimizationStats<MatrixType>& opt_stats) -> optimization_stats_t {
     auto iterations = immer::vector<optimization_iteration_t>{};
     for (const auto& iter : opt_stats.iterations) {
         auto jacobian = to_imsym_matrix(opt_stats.JacobianView(iter));
@@ -164,6 +163,31 @@ inline auto to_imsym_stats(const sym::OptimizationStats<MatrixType>& opt_stats)
 inline auto to_string(auto g) -> std::string {
     return fmt::format("{}", g);
 }
+/// just ops on the types
 
+inline auto residuals(const optional<optimization_iteration_t>& iteration)
+    -> optional<immer::vector<double>> {
+    if (not iteration.has_value()) {
+        return {};
+    }
+    return iteration->residuals;
+};
+
+inline auto jacobian(const optional<optimization_iteration_t>& iteration)
+    -> optional<imsym::matrix_t> {
+    if (not iteration.has_value()) {
+        return {};
+    }
+    return iteration->jacobian;
+};
+
+inline auto best_iteration(const detailed_internals_t& internals)
+    -> optional<imsym::optimization_iteration_t> {
+    auto best_idx = internals.optimization_stats.best_index;
+    if (internals.optimization_stats.iterations.size() <= best_idx) {
+        return {};
+    }
+    return internals.optimization_stats.iterations.at(best_idx);
+};
 }   // namespace imsym
 
