@@ -7,6 +7,9 @@ from pathlib import Path
 import click
 import os
 
+import ruff
+from ruff.__main__ import find_ruff_bin
+
 import symforce
 
 print("imported symforce from", symforce.__file__)
@@ -14,7 +17,6 @@ print("imported symforce from", symforce.__file__)
 symforce.set_epsilon_to_symbol()
 
 import symforce.symbolic as sf
-
 
 from symforce import typing as T
 
