@@ -5,10 +5,11 @@
  */
 
 #pragma once
-
 #include "imsym/opt/key.hh"
 #include "imsym/opt/values.hh"
 #include "imsym/opt/values_ops.hh"
+
+#include <immer/array.hpp>
 //
 #include <symforce/opt/key.h>
 #include <symforce/opt/values.h>
@@ -91,7 +92,7 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
 
     const auto type = sym::StorageOps<T>::TypeEnum();
 
-    if (!values.map.count(key)) {
+    if (not values.map.count(key)) {
         auto entry = values::index_entry_t{};
         entry.key = key;
         entry.type = type;
@@ -465,5 +466,41 @@ inline auto clone(const values_t<Scalar>& other) -> sym::Values<Scalar> {
     return values;
 }
 
+template<typename Scalar>
+inline auto copy_entry_storage(values_t<Scalar> values, auto entry) {
+    auto data = values.data.drop(entry.offset);
+    std::vector<Scalar> storage_data(entry.storage_dim);
+    for (size_t i = 0; i < entry.storage_dim; i++) {
+        storage_data[i] = data.at(i);
+    }
+    return storage_data;
+};
+
 }   // namespace imsym::values
 
+namespace sym {
+
+//
+// * Polymorphic helper to return tangent vector for a given value type
+//
+template<typename T, typename Scalar = typename sym::StorageOps<T>::Scalar>
+auto TangentVecHelper(const Scalar* const storage_this,
+                      const Scalar epsilon,
+                      const int32_t tangent_dim) -> immer::array<Scalar> {   // tangent_dim
+
+    const T t1 = sym::StorageOps<T>::FromStorage(storage_this);
+    const auto tangent_vec = sym::LieGroupOps<T>::ToTangent(t1, epsilon);
+
+    return immer::array<Scalar>(tangent_vec.data(), tangent_vec.data() + tangent_dim);
+}
+
+template<typename Scalar>
+auto MatrixTangentVecHelper(const Scalar* const storage_this,
+                            const Scalar,   // epsilon
+                            const int32_t tangent_dim) -> immer::array<Scalar> {
+    return immer::array<Scalar>(storage_this, storage_this + tangent_dim);
+}
+
+BY_TYPE_HELPER(TangentVecByType, TangentVecHelper, MatrixTangentVecHelper);
+
+}   // namespace sym

@@ -5,8 +5,10 @@
  */
 #define CATCH_CONFIG_MAIN
 #include "imsym/imsym.hh"
+#include "imsym/opt/formatters.hh"
+#include "imsym/opt/values_ext_ops.hh"
+#include "imsym/opt/values_ops.hh"
 //
-
 #include <catch2/catch_all.hpp>
 // first spdlog include wins
 #include <spdlog/spdlog.h>
@@ -18,6 +20,7 @@
 #include <sym/factors/prior_factor_rot3.h>
 #include <sym/index_entry_t.hpp>
 #include <sym/pose3.h>
+#include <sym/util/type_ops.h>
 #include <symforce/opt/factor.h>
 #include <symforce/opt/key.h>
 #include <symforce/opt/optimizer.h>
@@ -714,8 +717,41 @@ TEST_CASE("conversion") {
     const auto& stats = optimizer.Optimize(values, -1, true);
     spdlog::info("optimized sym values: {}", values);
 
-    auto imstats = imsym::to_imsym(move(stats));
-    spdlog::info("sparse problem optimized imsym values: {}", common::to_json(imstats));
-    //    }
+    // auto imstats = imsym::to_imsym(move(stats));
+    // spdlog::info("sparse problem optimized imsym values: {}", common::to_json(imstats));
+    //     }
+}
+
+TEST_CASE("tangent") {
+    auto epsilon = 1e-10;
+    auto pose = Pose3d(Rot3d::FromQuaternion({0, 1, 2, 3}), Vector3d{4, 5, 6});
+    auto tangent = sym::LieGroupOps<Pose3d>::ToTangent(pose, epsilon);
+    spdlog::info("tangent {}", tangent);
+
+    using Scalar = double;
+
+    auto sym_key_0 = sym::Key('P', 0);
+    auto sym_pose_0 = Pose3d(Rot3d::FromQuaternion({0, 1, 2, 3}), Vector3d{4, 5, 6});
+    auto sym_key_1 = sym::Key('P', 1);
+    auto sym_pose_1 = Pose3d(Rot3d::FromQuaternion({10, 11, 12, 13}), Vector3d{14, 15, 16});
+
+    auto initial_values = imsym::values::valuesd_t{
+        {imsym::key::to(sym_key_0), sym_pose_0},
+        {imsym::key::to(sym_key_1), sym_pose_1},
+        {imsym::key::key_t{.letter = 'l'},
+         Pose3d(Rot3d::FromQuaternion({7, 8, 9, 10}), Vector3d{11, 12, 13})},
+        {imsym::key::key_t{.letter = 'm'}, 1.2345},
+    };
+
+    auto index = imsym::values::create_index(initial_values, imsym::values::keys(initial_values));
+
+    for (const index_entry_t& entry : index.entries) {
+        auto tan_vec =
+            TangentVecByType<Scalar>(entry.type,
+                                     copy_entry_storage<Scalar>(initial_values, entry).data(),
+                                     epsilon,
+                                     entry.tangent_dim);
+        spdlog::error("tangent_vec {}", tan_vec);
+    }
 }
 

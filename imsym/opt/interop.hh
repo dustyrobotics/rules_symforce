@@ -61,11 +61,56 @@ inline auto to_imsym(const Eigen::SparseMatrix<Scalar>& sparse_matrix) -> sparse
 };
 
 template<typename Scalar>
+inline auto to_imsym(const Eigen::MappedSparseMatrix<Scalar>& sparse_matrix) -> sparse_matrix_t {
+    sparse_matrix_t out;
+    out.size = {sparse_matrix.rows(), sparse_matrix.cols()};
+
+    for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
+        for (typename Eigen::MappedSparseMatrix<Scalar>::InnerIterator it(sparse_matrix, k); it;
+             ++it) {
+            long row = it.row();
+            long col = it.col();
+            double value = it.value();
+
+            spdlog::info("{} {} {}", it.row(), it.col(), it.value());
+            // Insert the value into the immer::map with the 2D index (row, col) as the key
+            out.data = std::move(out.data).set({row, col}, value);
+        }
+    }
+
+    return out;
+};
+
+template<typename Scalar>
 inline auto to_imsym_matrix(const Eigen::Map<const Eigen::SparseMatrix<Scalar>>& sparse_matrix)
     -> sparse_matrix_t {
+    // const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
+
+    /*
+for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
+    for (const typename Eigen::MappedSparseMatrix<Scalar>::InnerIterator it(sparse_matrix, k);
+         it;
+         ++it) {
+        spdlog::info("{}", it.value());
+    }
+}
+*/
+    return to_imsym(Eigen::SparseMatrix<Scalar>(sparse_matrix));
+};
+
+/*
+template<typename Scalar>
+inline auto to_imsym_matrix(const MappedSparseMatrix<Scalar>& sparse_matrix)
+    -> sparse_matrix_t {
+    // const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
+
+    for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
+    for(MappedSparseMatrix<double>::InnerIterator it(spmat,k);it;++it){
+    }
     const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
     return to_imsym(m);
 };
+*/
 
 template<typename Scalar>
 inline auto to_imsym_matrix(const Eigen::Map<const Eigen::MatrixX<Scalar>>& dense_matrix)
@@ -108,7 +153,10 @@ inline auto to_imsym(const sym::optimization_iteration_t& iter) -> optimization_
 // sparse linearization
 template<typename Scalar>
 inline auto to_imsym(const sym::SparseLinearization<Scalar>& lin) {
-    return sparse_linearization_t{};
+    return sparse_linearization_t{.residual = to_imsym(lin.residual),
+                                  .hessian_lower = to_imsym(lin.hessian_lower),
+                                  .jacobian = to_imsym(lin.jacobian),
+                                  .rhs = to_imsym(lin.rhs)};
 }
 
 // dense linearization
@@ -138,16 +186,33 @@ inline auto to_imsym(const sym::optimization_status_t& status) -> optimization_s
     }
 };
 
-template<typename MatrixType>
-inline auto to_imsym(const sym::OptimizationStats<MatrixType>& opt_stats) -> optimization_stats_t {
+inline auto build_iterations(const auto& opt_stats, auto jacobians = true)
+    -> immer::vector<optimization_iteration_t> {
     auto iterations = immer::vector<optimization_iteration_t>{};
-    for (const auto& iter : opt_stats.iterations) {
-        auto jacobian = to_imsym_matrix(opt_stats.JacobianView(iter));
+
+    for (size_t i = 0; i < opt_stats.iterations.size(); i++) {
+        spdlog::info("saving iteration {} / {}", i, opt_stats.iterations.size());
+        const auto& iter = opt_stats.iterations.at(i);
         auto imsym_iter = to_imsym(iter);
-        imsym_iter.jacobian = jacobian;
+        if (jacobians) {
+            // this is only possible if we have the underlying data from the solve
+            // this requires the save_jacobians flag to be set in the optimization
+            // also the debug_full flag
+            // and we have to not have an iteration limit hit. ??
+            imsym_iter.jacobian = to_imsym_matrix(opt_stats.JacobianView(iter));
+        }
         iterations = std::move(iterations).push_back(imsym_iter);
     }
-
+    return iterations;
+};
+template<typename MatrixType>
+inline auto to_imsym(const sym::OptimizationStats<MatrixType>& opt_stats,
+                     bool save_all_iterations = false,
+                     bool jacobians = false) -> optimization_stats_t {
+    auto iterations = immer::vector<optimization_iteration_t>{};
+    if (save_all_iterations) {
+        iterations = build_iterations(opt_stats, jacobians);
+    }
     return ::imsym::optimization_stats_t{
         .iterations = iterations,
         .best_index = opt_stats.best_index,
@@ -173,12 +238,38 @@ inline auto residuals(const optional<optimization_iteration_t>& iteration)
     return iteration->residuals;
 };
 
+inline auto residuals(const optional<linearization_t>& lin) -> optional<immer::vector<double>> {
+    if (not lin.has_value()) {
+        return {};
+    }
+    return mmm::match(move(lin.value()))(
+        [&](const sparse_linearization_t& sparse) {
+            return sparse.residual;
+        },
+        [&](const dense_linearization_t& dense) {
+            return dense.residual;
+        });
+};
+
 inline auto jacobian(const optional<optimization_iteration_t>& iteration)
     -> optional<imsym::matrix_t> {
     if (not iteration.has_value()) {
         return {};
     }
     return iteration->jacobian;
+};
+
+inline auto jacobian(const optional<linearization_t>& lin) -> optional<imsym::matrix_t> {
+    if (not lin.has_value()) {
+        return {};
+    }
+    return mmm::match(move(lin.value()))(
+        [&](const sparse_linearization_t& sparse) -> imsym::matrix_t {
+            return sparse.jacobian;
+        },
+        [&](const dense_linearization_t& dense) -> imsym::matrix_t {
+            return dense.jacobian;
+        });
 };
 
 inline auto best_iteration(const detailed_internals_t& internals)

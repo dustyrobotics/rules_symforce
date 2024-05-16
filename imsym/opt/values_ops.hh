@@ -112,7 +112,7 @@ auto at(const values_t<Scalar>& values, const index_entry_t& entry) -> T {
     }
 
     auto slice = values.data.drop(entry.offset).take(entry.storage_dim);
-    if (slice.size() < entry.tangent_dim) {
+    if (slice.size() < entry.storage_dim) {
         // TODO really don't want this to throw
         throw std::runtime_error("not enough data to load data");
         // fmt::format("not enough data {} {} to load data", slice.size(), entry.storage_dim));
