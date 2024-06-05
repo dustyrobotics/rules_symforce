@@ -50,7 +50,7 @@ def generatefactor(basename,
                     output_names, 
                     output_residual_cpp, 
                     output_factor_cpp):
-    print("Starting symforce factor codegen from {}".format(python_src))
+    #print("Starting symforce factor codegen from {}".format(python_src))
     from symforce_repo.symforce_sym_gen.python import sym
 
     FUNCTION = read_python_source(python_src, function_name)
@@ -77,9 +77,9 @@ def generatefactor(basename,
                             )    
 
     write_function_to_disk(data, output_residual_cpp)
-    print("function: {}".format( output_residual_cpp))
+    #print("function: {}".format( output_residual_cpp))
 
-    print("linearization arguments:", arguments)
+    #print("linearization arguments:", arguments)
     # also generate the linearization function (eg the factor)
     # it is linearized around "which_args"
     codegen_linearization = data.with_linearization(
@@ -87,7 +87,7 @@ def generatefactor(basename,
     )
 
     write_linearization_to_disk(codegen_linearization, output_factor_cpp)
-    print("factor:   {}".format(output_factor_cpp))
+    #print("factor:   {}".format(output_factor_cpp))
 
 
 
@@ -99,7 +99,7 @@ def generatefactor(basename,
 @click.option('--output_names',  multiple=True, type=str, default=None, help="the names of the output args")
 @click.option('--output_cpp', help="output path for function (eg residual.h ) file")
 def rawcodegen(basename, python_src, function_name, return_key, output_names, output_cpp):
-    print("Starting symforce codegen from {}".format(python_src))
+    #print("Starting symforce codegen from {}".format(python_src))
     
     FUNCTION = read_python_source(python_src, function_name)
 
@@ -109,7 +109,7 @@ def rawcodegen(basename, python_src, function_name, return_key, output_names, ou
     # try and read the input types from the function interface
     input_types = None
 
-    print("the return key for this is:", return_key)
+    #print("the return key for this is:", return_key)
     data = codegen.Codegen.function(FUNCTION, 
                                     config=CppConfig(),
                                     name = basename,
@@ -129,9 +129,9 @@ def rawcodegen(basename, python_src, function_name, return_key, output_names, ou
 
 
 
-    print("function: {} -> codegen with base name: {}".format(function_name, basename))
+    #print("function: {} -> codegen with base name: {}".format(function_name, basename))
     write_function_to_disk(data, output_cpp)
-    print("function: {}".format( output_cpp))
+    #print("function: {}".format( output_cpp))
 
 
 if __name__ == "__main__":

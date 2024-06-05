@@ -151,6 +151,56 @@ auto at(const valuesf_t& values, const key::key_t& key) -> T {
     return at<float, T>(values, key);
 }
 
+/*
+template<typename Scalar, typename T>
+inline auto at_or(const values_t<Scalar>& values, const key::key_t& key, const T& default_value)
+    -> T {
+    if (not has(values, key)) {
+        return default_value;
+    }
+    auto entry = values.map.at(key);
+    return at<T>(values, entry);
+}
+*/
+
+template<typename T>
+auto at_or(const values_t<double>& values, const key::key_t& key, const T& default_value) -> T {
+    if (not has(values, key)) {
+        return default_value;
+    }
+    auto entry = values.map.at(key);
+    return at<double, T>(values, entry);
+}
+
+template<typename T>
+auto at_or(const values_t<float>& values, const key::key_t& key, const T& default_value) -> T {
+    if (not has(values, key)) {
+        return default_value;
+    }
+    auto entry = values.map.at(key);
+    return at<float, T>(values, entry);
+}
+
+template<typename T>
+auto at_or(const values_t<double>& values,
+           const key::key_t& key,
+           const values_t<double>& default_values) -> T {
+    if (not has(values, key)) {
+        return at<double, T>(default_values, key);
+    }
+    return at<double, T>(values, key);
+}
+
+template<typename T>
+auto at_or(const values_t<float>& values,
+           const key::key_t& key,
+           const values_t<float>& default_values) -> T {
+    if (not has(values, key)) {
+        return at<float, T>(default_values, key);
+    }
+    return at<float, T>(values, key);
+}
+
 template<typename Scalar>
 inline auto keys(const values_t<Scalar>& values) {
     return keys<Scalar>(values.map);

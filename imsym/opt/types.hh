@@ -48,6 +48,13 @@ struct sparse_matrix_t {
 };
 
 struct dense_matrix_t {
+    // column major dense matrix
+    coords_t size;
+    immer::vector<double> data;
+};
+
+struct dense_lt_matrix_t {
+    // column major dense matrix with only the lower triangular part filled in
     coords_t size;
     immer::vector<double> data;
 };
@@ -98,7 +105,7 @@ struct optimization_iteration_t {
     immer::vector<double> residuals;
 
     // The problem jacobian exactly if dense, or as CSC format sparse data column vector if sparse
-    // either sparse or dense jacobian
+    // either sparse or dense jacobian // TODO support the CSC format of sparse data
     matrix_t jacobian;
 };
 
@@ -199,24 +206,16 @@ struct optimization_stats_t {
     sparse_matrix_t cholesky_factor_sparsity;
 };
 
-struct detailed_internals_t {
-    // at best iteration:
-    // probably want to have a smaller subset of these for the last solved state, and the first
-    // solved state computed always these versions would be for the full problem, and be expensive
-    immer::map<imsym::key::key_t, dense_matrix_t> covariances_by_key;
-
-    // pair of residual index and dim of the factor residual block
-    immer::vector<offset_t> factor_residual_offsets;
-
-    // the results from the solver
-    optimization_stats_t optimization_stats;
-};
+using covariance_map_t = immer::map<imsym::key::key_t, dense_matrix_t>;
+// using full_covariance_t = dense_lt_matrix_t;
+using full_covariance_t = dense_matrix_t;
 
 }   // namespace imsym
 
 COMMON_STRUCT_HASH(imsym, coords_t, row, col);
 COMMON_STRUCT(imsym, sparse_matrix_t, size, data);
 COMMON_STRUCT(imsym, dense_matrix_t, size, data);
+COMMON_STRUCT(imsym, dense_lt_matrix_t, size, data);
 COMMON_STRUCT_HASH(imsym, offset_t, offset, dim);
 COMMON_ENUM(imsym, optimization_status_t, INVALID, SUCCESS, HIT_ITERATION_LIMIT, FAILED);
 COMMON_STRUCT(imsym, sparse_linearization_t, residual, hessian_lower, jacobian, rhs);
@@ -254,10 +253,4 @@ COMMON_STRUCT(imsym,
               // jacobian_sparsity,    // jacobian is stored in each iteration directly
               linear_solver_ordering,
               cholesky_factor_sparsity);
-
-COMMON_STRUCT(imsym,                     //
-              detailed_internals_t,      //
-              covariances_by_key,        //
-              factor_residual_offsets,   //
-              optimization_stats);
 

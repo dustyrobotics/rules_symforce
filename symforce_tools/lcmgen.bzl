@@ -12,8 +12,8 @@ def _impl(ctx):
         #print(file.path)
         arguments.append(file.path)# the lcm file
 
-    arguments.extend(["--verbose"])
-    arguments.extend(["--print-def"])
+    #arguments.extend(["--verbose"])
+    #arguments.extend(["--print-def"])
 
     ctx.actions.run(
         inputs = [ctx.file.src],

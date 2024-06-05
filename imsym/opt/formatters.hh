@@ -4,8 +4,20 @@
 #include "imsym/opt/key.hh"
 #include "imsym/opt/types.hh"
 #include "imsym/opt/values.hh"
+#include "types.hh"
 
 #include <fmt/core.h>
+template<>
+struct fmt::formatter<imsym::coords_t> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const imsym::coords_t& c, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "coords_t: row: {} col: {}", c.row, c.col);
+    }
+};
 
 // explicitly define the formatters for the imsym uses of flex vector
 // when this is generalized, fmt/ranges kicks in. and blows up
@@ -359,19 +371,43 @@ struct fmt::formatter<immer::set<imsym::key::key_t>> {
 };
 
 template<>
-struct fmt::formatter<imsym::detailed_internals_t> {
+struct fmt::formatter<imsym::dense_matrix_t> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
     template<typename FormatContext>
-    auto format(const imsym::detailed_internals_t& f, FormatContext& ctx) {
-        // should be automatic. iterate over the fields of the struct
-        return fmt::format_to(
-            ctx.out(),
-            "detailed_internals_t( covariances_by_key: {}, factor_residual_offsets: {}, opt_stats {})",
-            f.covariances_by_key,
-            f.factor_residual_offsets,
-            f.optimization_stats);
+    auto format(const imsym::dense_matrix_t& m, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "dense_matrix_t.T [ {}\n", m.size);
+        size_t data_idx = 0;
+        for (size_t col_idx = 0; col_idx < m.size.col; col_idx++) {
+            for (size_t row_idx = 0; row_idx < m.size.row; row_idx++) {
+                auto val = m.data[data_idx++];
+                fmt::format_to(ctx.out(), "{},", val);
+            }
+            fmt::format_to(ctx.out(), "\n");
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<imsym::dense_lt_matrix_t> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const imsym::dense_lt_matrix_t& m, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "dense_lt_matrix_t.T [ {}\n", m.size);
+        size_t data_idx = 0;
+        for (size_t col_idx = 0; col_idx < m.size.col; col_idx++) {
+            for (size_t row_idx = col_idx; row_idx < m.size.row; row_idx++) {
+                auto val = m.data[data_idx++];
+                fmt::format_to(ctx.out(), "{},", val);
+            }
+            fmt::format_to(ctx.out(), "\n");
+        }
+        return fmt::format_to(ctx.out(), "]");
     }
 };

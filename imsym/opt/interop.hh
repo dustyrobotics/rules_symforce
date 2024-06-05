@@ -11,6 +11,15 @@
 
 namespace imsym {
 
+inline auto build_residual_offsets(const auto& factors, const auto& linearizer) {
+    auto out = immer::vector<imsym::offset_t>{};
+    const auto& offset_and_residual_dim = linearizer.ResidualEntryByFactor();
+    for (const auto& [residual_offset, dim] : offset_and_residual_dim) {
+        out = std::move(out).push_back({residual_offset, dim});
+    }
+    return out;
+};
+
 inline auto to_imsym(const Eigen::MatrixXd& m) -> dense_matrix_t {
     dense_matrix_t out;
     out.size = {.row = m.rows(), .col = m.cols()};
@@ -22,11 +31,35 @@ inline auto to_imsym(const Eigen::MatrixXd& m) -> dense_matrix_t {
     return out;
 };
 
+inline auto to_imsym_lt(const Eigen::MatrixXd& m) -> dense_lt_matrix_t {
+    dense_lt_matrix_t out;
+    out.size = {.row = m.rows(), .col = m.cols()};
+    for (int col = 0; col < m.cols(); col++) {
+        for (int row = col; row < m.rows(); row++) {
+            out.data = std::move(out.data).push_back(m(row, col));
+        }
+    }
+    return out;
+};
+
 inline auto to_eigen(const dense_matrix_t& m) -> Eigen::MatrixXd {
+    // column major
     Eigen::MatrixXd out(m.size.row, m.size.col);
     auto idx = 0;
     for (int col = 0; col < m.size.col; col++) {
         for (int row = 0; row < m.size.row; row++) {
+            out(row, col) = m.data[idx++];
+        }
+    }
+    return out;
+};
+
+inline auto to_eigen(const dense_lt_matrix_t& m) -> Eigen::MatrixXd {
+    // column major
+    Eigen::MatrixXd out(m.size.row, m.size.col);
+    auto idx = 0;
+    for (int col = 0; col < m.size.col; col++) {
+        for (int row = col; row < m.size.row; row++) {
             out(row, col) = m.data[idx++];
         }
     }
@@ -270,15 +303,6 @@ inline auto jacobian(const optional<linearization_t>& lin) -> optional<imsym::ma
         [&](const dense_linearization_t& dense) -> imsym::matrix_t {
             return dense.jacobian;
         });
-};
-
-inline auto best_iteration(const detailed_internals_t& internals)
-    -> optional<imsym::optimization_iteration_t> {
-    auto best_idx = internals.optimization_stats.best_index;
-    if (internals.optimization_stats.iterations.size() <= best_idx) {
-        return {};
-    }
-    return internals.optimization_stats.iterations.at(best_idx);
 };
 }   // namespace imsym
 
