@@ -21,13 +21,14 @@ def symforce_deps():
         new_git_repository,
         name = "symenginepy",
         remote = "https://github.com/asa/symenginepy.git",
-        commit = "e818d46db53f5482b168e42c0152c3522fdde6a8",
+        commit = "762f83db11ff369a0206ac0bc9b5e5b356b434e3",
     )
     maybe(
         new_git_repository,
         name = "cython_repo",
-        remote = "https://github.com/cython/cython.git",
-        tag = "0.29.37.1",
+        remote = "https://github.com/asa/cython.git",
+        #tag = "0.29.37.1",
+        branch = "autodev",
     )
     maybe(
         new_git_repository,
