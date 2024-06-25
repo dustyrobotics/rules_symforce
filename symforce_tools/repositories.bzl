@@ -1,5 +1,5 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 def symforce_deps():
@@ -23,8 +23,9 @@ def symforce_deps():
         remote = "https://github.com/asa/symenginepy.git",
         commit = "e818d46db53f5482b168e42c0152c3522fdde6a8",
     )
-    new_git_repository(
-        name = "cython",
+    maybe(
+        new_git_repository,
+        name = "cython_repo",
         remote = "https://github.com/cython/cython.git",
         tag = "0.29.37.1",
     )
@@ -44,25 +45,28 @@ def symforce_deps():
     visibility = ["//visibility:public"],
 )""",
         remote = "https://github.com/catchorg/Catch2.git",
-        commit="908c370f245956fd5565207db77641ae1e6d2b36",
+        commit = "908c370f245956fd5565207db77641ae1e6d2b36",
     )
 
 def symforce_local_deps(root):
     """assume the repositories are all underneath the same root"""
-        
+
     native.new_local_repository(
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
-        path = root + "/symforce"
+        path = root + "/symforce",
     )
     native.new_local_repository(
         name = "symengine",
         build_file = "@rules_symforce//symengine_tools:symengine.BUILD",
-        path = root + "/symengine"
+        path = root + "/symengine",
+    )
+    native.local_repository(
+        name = "cython_repo",
+        path = root + "/cython",
     )
     native.local_repository(
         name = "symenginepy",
-        path = root + "/symenginepy"
+        path = root + "/symenginepy",
     )
     symforce_deps()
-
