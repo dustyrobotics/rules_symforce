@@ -4,6 +4,7 @@
 #include "imsym/opt/key.hh"
 #include "imsym/opt/types.hh"
 #include "imsym/opt/values.hh"
+#include "imsym/opt/values_ops.hh"
 #include "types.hh"
 
 #include <fmt/core.h>
@@ -309,8 +310,8 @@ struct fmt::formatter<imsym::values::valuesd_t> {
     auto format(const imsym::values::valuesd_t& vals, FormatContext& ctx) {
         fmt::format_to(ctx.out(), "values\n");
         const auto full_index =
-            create_index(vals, keys<double>(vals.map, true));   // sort by offset
-                                                                //
+            create_index(vals, imsym::values::keys<double>(vals.map, true));   // sort by offset
+                                                                               //
         for (const auto& entry : full_index.entries) {
             fmt::format_to(ctx.out(),
                            "\n\t{} {}",
