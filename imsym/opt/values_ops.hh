@@ -99,6 +99,23 @@ auto find_letter_sub(const values_t<Scalar>& values, const key::key_t& key)
     return {};
 }
 
+template<typename Scalar>
+inline auto get_largest_sub(const values_t<Scalar>& values, char letter) {
+    key::key_t::subscript_t largest = key::key_t::kInvalidSub;
+    for (const auto& k : keys_with_letter(values, letter)) {
+        largest = std::max(largest, k.sub);
+    }
+    return largest;
+};
+
+template<typename Scalar>
+inline auto get_largest_super(const values_t<Scalar>& values, char letter) {
+    key::key_t::superscript_t largest = key::key_t::kInvalidSuper;
+    for (const auto& k : keys_with_letter(values, letter)) {
+        largest = std::max(largest, k.super);
+    }
+    return largest;
+};
 // need a storageOps that can read immer::vector
 
 template<typename Scalar, typename T>
