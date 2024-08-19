@@ -29,6 +29,7 @@
 #include <lager/extra/cereal/immer_vector.hpp>
 //
 #include "common/enum.hh"
+#include "common/hash/immer.hh"
 namespace imsym {
 
 using timestamp_t = size_t;
@@ -42,24 +43,36 @@ struct coords_t {
     long col;
 };
 
-struct sparse_matrix_t {
+template<typename Scalar>
+struct sparse_matrix {
     coords_t size;
-    immer::map<coords_t, double> data;
+    immer::map<coords_t, Scalar> data;
 };
 
-struct dense_matrix_t {
+using sparse_matrix_t = sparse_matrix<double>;
+using sparse_matrixf_t = sparse_matrix<float>;
+
+template<typename Scalar>
+struct dense_matrix {
     // column major dense matrix
     coords_t size;
-    immer::vector<double> data;
+    immer::vector<Scalar> data;
 };
 
-struct dense_lt_matrix_t {
+using dense_matrix_t = dense_matrix<double>;
+using dense_matrixf_t = dense_matrix<float>;
+
+template<typename Scalar>
+struct dense_lt_matrix {
     // column major dense matrix with only the lower triangular part filled in
     coords_t size;
-    immer::vector<double> data;
+    immer::vector<Scalar> data;
 };
+using dense_lt_matrix_t = dense_lt_matrix<double>;
+using dense_lt_matrixf_t = dense_lt_matrix<float>;
 
 using matrix_t = std::variant<dense_matrix_t, sparse_matrix_t>;
+using matrixf_t = std::variant<dense_matrixf_t, sparse_matrixf_t>;
 
 struct offset_t {
     residual_index_t offset;
@@ -196,7 +209,7 @@ struct optimization_stats_t {
     /// Only filled if using an Optimizer created with debug_stats = true and a linear solver that
     /// exposes Permutation() (such as the default SparseCholeskySolver).  Otherwise, will be
     /// default constructed.
-    immer::vector<size_t> linear_solver_ordering;
+    immer::vector<int> linear_solver_ordering;
 
     /// The sparsity pattern of the cholesky factor L
     ///
@@ -213,13 +226,19 @@ using full_covariance_t = dense_matrix_t;
 }   // namespace imsym
 
 COMMON_STRUCT_HASH(imsym, coords_t, row, col);
-COMMON_STRUCT(imsym, sparse_matrix_t, size, data);
-COMMON_STRUCT(imsym, dense_matrix_t, size, data);
-COMMON_STRUCT(imsym, dense_lt_matrix_t, size, data);
 COMMON_STRUCT_HASH(imsym, offset_t, offset, dim);
+
+COMMON_STRUCT_HASH(imsym, sparse_matrix_t, size, data);
+COMMON_STRUCT_HASH(imsym, sparse_matrixf_t, size, data);
+COMMON_STRUCT_HASH(imsym, dense_matrix_t, size, data);
+COMMON_STRUCT_HASH(imsym, dense_matrixf_t, size, data);
+COMMON_STRUCT_HASH(imsym, dense_lt_matrix_t, size, data);
+COMMON_STRUCT_HASH(imsym, dense_lt_matrixf_t, size, data);
+
 COMMON_ENUM(imsym, optimization_status_t, INVALID, SUCCESS, HIT_ITERATION_LIMIT, FAILED);
-COMMON_STRUCT(imsym, sparse_linearization_t, residual, hessian_lower, jacobian, rhs);
-COMMON_STRUCT(imsym, dense_linearization_t, residual, hessian_lower, jacobian, rhs);
+
+COMMON_STRUCT_HASH(imsym, sparse_linearization_t, residual, hessian_lower, jacobian, rhs);
+COMMON_STRUCT_HASH(imsym, dense_linearization_t, residual, hessian_lower, jacobian, rhs);
 
 COMMON_STRUCT(imsym,
               optimization_iteration_t,

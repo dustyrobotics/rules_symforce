@@ -5,6 +5,7 @@
  */
 
 #pragma once
+#include "common/hash/immer.hh"
 #include "common/immer/utils.hh"
 #include "common/struct.hh"
 #include "imsym/opt/key.hh"
@@ -187,12 +188,12 @@ using valuesf_t = values_t<float>;
 
 }   // namespace imsym::values
 
-COMMON_STRUCT(imsym::values, index_entry_t, key, type, offset, storage_dim, tangent_dim);
+COMMON_STRUCT_HASH(imsym::values, index_entry_t, key, type, offset, storage_dim, tangent_dim);
 
-COMMON_STRUCT(imsym::values, index_t, storage_dim, tangent_dim, entries);
+COMMON_STRUCT_HASH(imsym::values, index_t, storage_dim, tangent_dim, entries);
 
-COMMON_STRUCT(imsym::values, valuesd_t, map, data);
-COMMON_STRUCT(imsym::values, valuesf_t, map, data);
+COMMON_STRUCT_HASH(imsym::values, valuesd_t, map, data);
+COMMON_STRUCT_HASH(imsym::values, valuesf_t, map, data);
 
 inline auto to_string(const std::pair<imsym::key::key_t, imsym::values::index_entry_t>& e)
     -> const std::string {

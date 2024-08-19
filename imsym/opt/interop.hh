@@ -20,8 +20,9 @@ inline auto build_residual_offsets(const auto& factors, const auto& linearizer) 
     return out;
 };
 
-inline auto to_imsym(const Eigen::MatrixXd& m) -> dense_matrix_t {
-    dense_matrix_t out;
+template<typename Scalar>
+inline auto to_imsym(const Eigen::MatrixX<Scalar>& m) -> dense_matrix<Scalar> {
+    dense_matrix<Scalar> out;
     out.size = {.row = m.rows(), .col = m.cols()};
     for (int col = 0; col < m.cols(); col++) {
         for (int row = 0; row < m.rows(); row++) {
@@ -31,8 +32,21 @@ inline auto to_imsym(const Eigen::MatrixXd& m) -> dense_matrix_t {
     return out;
 };
 
-inline auto to_imsym_lt(const Eigen::MatrixXd& m) -> dense_lt_matrix_t {
-    dense_lt_matrix_t out;
+template<typename Scalar>
+inline auto to_imsym_matrix(const Eigen::MatrixX<Scalar>& m) -> dense_matrix<Scalar> {
+    dense_matrix<Scalar> out;
+    out.size = {.row = m.rows(), .col = m.cols()};
+    for (int col = 0; col < m.cols(); col++) {
+        for (int row = 0; row < m.rows(); row++) {
+            out.data = std::move(out.data).push_back(m(row, col));
+        }
+    }
+    return out;
+};
+
+template<typename Scalar>
+inline auto to_imsym_lt(const Eigen::MatrixX<Scalar>& m) {
+    dense_lt_matrix<Scalar> out;
     out.size = {.row = m.rows(), .col = m.cols()};
     for (int col = 0; col < m.cols(); col++) {
         for (int row = col; row < m.rows(); row++) {
@@ -42,9 +56,33 @@ inline auto to_imsym_lt(const Eigen::MatrixXd& m) -> dense_lt_matrix_t {
     return out;
 };
 
-inline auto to_eigen(const dense_matrix_t& m) -> Eigen::MatrixXd {
+template<typename Scalar>
+inline auto to_eigen(const immer::vector<Scalar>& v) {
+    Eigen::VectorX<Scalar> out(v.size());
+    for (size_t i = 0; i < v.size(); ++i) {
+        out[i] = v[i];
+    }
+    return out;
+}
+
+template<typename Scalar>
+inline auto to_eigen(const sparse_matrix<Scalar>& m) {
+    std::vector<Eigen::Triplet<Scalar>> triplets;
+
+    Eigen::SparseMatrix<Scalar> sparse_mat(m.size.row, m.size.col);
+
+    for (const auto& [coords, v] : m.data) {
+        triplets.push_back({coords.row, coords.col, v});
+    }
+    sparse_mat.setFromTriplets(triplets.begin(), triplets.end());
+
+    return sparse_mat;
+};
+
+template<typename Scalar>
+inline auto to_eigen(const dense_matrix<Scalar>& m) {
     // column major
-    Eigen::MatrixXd out(m.size.row, m.size.col);
+    Eigen::MatrixX<Scalar> out(m.size.row, m.size.col);
     auto idx = 0;
     for (int col = 0; col < m.size.col; col++) {
         for (int row = 0; row < m.size.row; row++) {
@@ -54,9 +92,11 @@ inline auto to_eigen(const dense_matrix_t& m) -> Eigen::MatrixXd {
     return out;
 };
 
-inline auto to_eigen(const dense_lt_matrix_t& m) -> Eigen::MatrixXd {
+template<typename Scalar>
+inline auto to_eigen(const dense_lt_matrix<Scalar>& m) {
+    // TODO a matrixL view?
     // column major
-    Eigen::MatrixXd out(m.size.row, m.size.col);
+    Eigen::MatrixX<Scalar> out(m.size.row, m.size.col);
     auto idx = 0;
     for (int col = 0; col < m.size.col; col++) {
         for (int row = col; row < m.size.row; row++) {
@@ -66,8 +106,9 @@ inline auto to_eigen(const dense_lt_matrix_t& m) -> Eigen::MatrixXd {
     return out;
 };
 
-inline auto to_imsym(std::unordered_map<sym::Key, Eigen::MatrixXd> covariances) {
-    auto out = immer::map<imsym::key::key_t, dense_matrix_t>{};
+template<typename Scalar>
+inline auto to_imsym(std::unordered_map<sym::Key, Eigen::MatrixX<Scalar>> covariances) {
+    auto out = immer::map<imsym::key::key_t, dense_matrix<Scalar>>{};
     for (const auto& [k, v] : covariances) {
         out = std::move(out).set(imsym::key::to(k), to_imsym(v));
     }
@@ -75,18 +116,14 @@ inline auto to_imsym(std::unordered_map<sym::Key, Eigen::MatrixXd> covariances) 
 };
 
 template<typename Scalar>
-inline auto to_imsym(const Eigen::SparseMatrix<Scalar>& sparse_matrix) -> sparse_matrix_t {
-    sparse_matrix_t out;
-    out.size = {sparse_matrix.rows(), sparse_matrix.cols()};
+inline auto to_imsym(const Eigen::SparseMatrix<Scalar>& mat) {
+    sparse_matrix<Scalar> out;
+    out.size = {mat.rows(), mat.cols()};
 
-    for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
-        for (typename Eigen::SparseMatrix<Scalar>::InnerIterator it(sparse_matrix, k); it; ++it) {
-            long row = it.row();
-            long col = it.col();
-            double value = it.value();
-
+    for (int k = 0; k < mat.outerSize(); ++k) {
+        for (typename Eigen::SparseMatrix<Scalar>::InnerIterator it(mat, k); it; ++it) {
             // Insert the value into the immer::map with the 2D index (row, col) as the key
-            out.data = std::move(out.data).set({row, col}, value);
+            out.data = std::move(out.data).set({it.row(), it.col()}, it.value());
         }
     }
 
@@ -94,19 +131,19 @@ inline auto to_imsym(const Eigen::SparseMatrix<Scalar>& sparse_matrix) -> sparse
 };
 
 template<typename Scalar>
-inline auto to_imsym(const Eigen::MappedSparseMatrix<Scalar>& sparse_matrix) -> sparse_matrix_t {
-    sparse_matrix_t out;
-    out.size = {sparse_matrix.rows(), sparse_matrix.cols()};
+inline auto to_imsym(const Eigen::MappedSparseMatrix<Scalar>& sparse_mat) {
+    sparse_matrix<Scalar> out;
+    out.size = {sparse_mat.rows(), sparse_mat.cols()};
 
-    for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
-        for (typename Eigen::MappedSparseMatrix<Scalar>::InnerIterator it(sparse_matrix, k); it;
+    for (int k = 0; k < sparse_mat.outerSize(); ++k) {
+        for (typename Eigen::MappedSparseMatrix<Scalar>::InnerIterator it(sparse_mat, k); it;
              ++it) {
             long row = it.row();
             long col = it.col();
             double value = it.value();
 
-            spdlog::info("{} {} {}", it.row(), it.col(), it.value());
-            // Insert the value into the immer::map with the 2D index (row, col) as the key
+            // spdlog::info("{} {} {}", it.row(), it.col(), it.value());
+            //  Insert the value into the immer::map with the 2D index (row, col) as the key
             out.data = std::move(out.data).set({row, col}, value);
         }
     }
@@ -115,56 +152,22 @@ inline auto to_imsym(const Eigen::MappedSparseMatrix<Scalar>& sparse_matrix) -> 
 };
 
 template<typename Scalar>
-inline auto to_imsym_matrix(const Eigen::Map<const Eigen::SparseMatrix<Scalar>>& sparse_matrix)
-    -> sparse_matrix_t {
-    // const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
-
-    /*
-for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
-    for (const typename Eigen::MappedSparseMatrix<Scalar>::InnerIterator it(sparse_matrix, k);
-         it;
-         ++it) {
-        spdlog::info("{}", it.value());
-    }
-}
-*/
-    return to_imsym(Eigen::SparseMatrix<Scalar>(sparse_matrix));
+inline auto to_imsym_matrix(const Eigen::Map<const Eigen::SparseMatrix<Scalar>>& mat)
+    -> sparse_matrix<Scalar> {
+    return to_imsym(Eigen::SparseMatrix<Scalar>(mat));
 };
 
-/*
 template<typename Scalar>
-inline auto to_imsym_matrix(const MappedSparseMatrix<Scalar>& sparse_matrix)
-    -> sparse_matrix_t {
-    // const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
-
-    for (int k = 0; k < sparse_matrix.outerSize(); ++k) {
-    for(MappedSparseMatrix<double>::InnerIterator it(spmat,k);it;++it){
-    }
-    const Eigen::SparseMatrix<Scalar>& m = sparse_matrix;
-    return to_imsym(m);
-};
-*/
-
-template<typename Scalar>
-inline auto to_imsym_matrix(const Eigen::Map<const Eigen::MatrixX<Scalar>>& dense_matrix)
-    -> dense_matrix_t {
-    const Eigen::MatrixX<Scalar>& m = dense_matrix;
+inline auto to_imsym_matrix(const Eigen::Map<const Eigen::MatrixX<Scalar>>& mat)
+    -> dense_matrix<Scalar> {
+    const Eigen::MatrixX<Scalar>& m = mat;
     return to_imsym(m);
 };
 
-inline auto to_imsym(const Eigen::VectorXd& v) {
-    return immer::vector<double>{v.begin(), v.end()};
+template<typename Scalar>
+inline auto to_imsym(const Eigen::VectorX<Scalar>& v) {
+    return immer::vector<Scalar>{v.begin(), v.end()};
 };
-
-inline auto to_imsym(const Eigen::VectorXi& v) {
-    return immer::vector<size_t>{v.begin(), v.end()};
-};
-
-/*
-inline auto to_imsym(const ::eigen_lcm::MatrixXd& v) {
-    return to_imsym(v);
-};
-*/
 
 // could be sparse or dense iteration
 inline auto to_imsym(const sym::optimization_iteration_t& iter) -> optimization_iteration_t {
