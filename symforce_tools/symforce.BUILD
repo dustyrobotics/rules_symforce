@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_symforce//symforce_tools:gen.bzl", "cc_gen_pkg", "cc_sym_util_pkg", "lcm_pkg", "py_gen_pkg")
 load("@rules_symforce//symforce_tools:lcmgen.bzl", "cc_lcm_library")
 load("@symforce_requirements//:requirements.bzl", "requirement")
@@ -233,6 +234,15 @@ cc_library(
     ],
 )
 
+write_file(
+    name = "null_tick_tock",
+    out = "null_tick_tock.h",
+    content = [
+        "#pragma once",
+        "#define SYM_TIME_SCOPE(fmt_str, ...)",
+    ],
+)
+
 cc_library(
     name = "opt",
     srcs = glob(
@@ -254,8 +264,10 @@ cc_library(
             "symforce/opt/values.h",
             "symforce/opt/values.tcc",
         ],
-    ),
+    ) + ["null_tick_tock.h"],
     copts = COPTS,
+    # the following disables all stats collection
+    defines = ["SYMFORCE_TIC_TOC_HEADER=<null_tick_tock.h>"],
     includes = ["."],
     deps = [
         ":eigen_lcm",
