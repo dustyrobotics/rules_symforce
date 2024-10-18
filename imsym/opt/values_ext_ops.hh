@@ -138,6 +138,21 @@ inline auto set(sym::Values<Scalar>& values, key::key_t key, const T& value) {
     return values;
 };
 
+// only update an existing key, and keep its same type
+template<typename Scalar, typename T>
+inline auto update(values_t<Scalar> values, const imsym::key::key_t& key, const T& value) {
+    // make sure the key is present and we aren't changing the type in the map
+    if (values.map.count(key)) {
+        const auto type = sym::StorageOps<T>::TypeEnum();
+        if (values.map.at(key).type != type) {
+            return values;
+        }
+        return imsym::values::set(values, key, value);
+    }
+    // otherwise return untouched values
+    return values;
+};
+
 // need a storageOps that can read immer::vector
 
 /*

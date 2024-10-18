@@ -65,6 +65,7 @@ struct index_t {
 
 namespace imsym::values {
 
+// TODO pull from codegen
 template<typename Scalar>
 using AllowedTypes = std::variant<Scalar,
                                   // sym::type_t::DATABUFFER", databuffers is unsupported ";

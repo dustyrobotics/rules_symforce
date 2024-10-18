@@ -224,7 +224,8 @@ inline auto keys(const values_t<Scalar>& values) {
 };
 
 template<typename Scalar>
-inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset = true) {
+inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset = true)
+    -> immer::vector<imsym::key::key_t> {
     // Sort the keys by offset so iterating through is saner and more memory friendly
     if (sort_by_offset) {
         std::vector<imsym::key::key_t> keys;
@@ -331,6 +332,22 @@ inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b, const va
     return merge(merge(a, b), c);
 }
 
+// merge b over a for keys which exist in both
+template<typename Scalar>
+inline auto merge_over(const values_t<Scalar>& a, const values_t<Scalar>& b) -> values_t<Scalar> {
+    // Create a new values_t<Scalar> with only the keys from b that exist in a
+    values_t<Scalar> trimmed_b = b;
+    trimmed_b.map = {};
+
+    for (const auto& [k, v] : b.map) {
+        if (a.map.count(k)) {
+            trimmed_b.map = std::move(trimmed_b.map).set(k, v);
+        }
+    }
+
+    return merge(a, trimmed_b);
+}
+
 /**
  * Efficiently update the keys from a different structured values, given by
  * `index_a` and `index_b`. This purely copies slices of the data arrays.
@@ -404,10 +421,10 @@ inline values_t<Scalar> copy_data_for_existing_key(const values_t<Scalar>& value
     return values_out;
 }
 /*
- * update a single key from other
+ * update a single key from b
  * this avoids having to know about type info
  * if key exists on both sides, straightforward
- * if key exists in other
+ * if key exists in b
  * - copy the data from other
  */
 template<typename Scalar>
@@ -448,6 +465,22 @@ inline values_t<Scalar> extract(const values_t<Scalar>& other, const index_t& in
         values.map = move(values.map).set(entry.key, entry);
     }
     return values;
+}
+
+// remove keys from a
+template<typename Scalar, typename Container>
+inline auto drop_keys(const values_t<Scalar>& a, const Container& keys)
+    -> std::enable_if_t<std::is_same_v<typename Container::value_type, imsym::key::key_t>,
+                        values_t<Scalar>> {
+    values_t<Scalar> result = a;
+    for (const auto& key : keys) {
+        result.map = move(result.map).erase(key);
+    }
+
+    // Note: The data is not repacked here. cleanup() should be called
+    // to repack the data and update the offsets in the remaining entries.
+
+    return result;
 }
 
 template<typename Scalar>
