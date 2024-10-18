@@ -12,8 +12,7 @@
 #include "common/struct.hh"
 #include "common/variant/match.hh"
 //
-#include "imsym/values.hh"
-
+#include "imsym/opt/values.hh"
 //
 #include <immer/flex_vector.hpp>
 #include <immer/map.hpp>
@@ -57,7 +56,6 @@ inline auto create_index(const values_t<Scalar>& values,
         if (val == nullptr) {
             // REALLY DONT WANT THIS TO THROW!!
             throw std::runtime_error("Tried to create index for key not in values");
-            //     fmt::format("Tried to create index for key {} not in values", key));
         }
 
         const auto entry = *val;
@@ -101,6 +99,23 @@ auto find_letter_sub(const values_t<Scalar>& values, const key::key_t& key)
     return {};
 }
 
+template<typename Scalar>
+inline auto get_largest_sub(const values_t<Scalar>& values, char letter) {
+    key::key_t::subscript_t largest = key::key_t::kInvalidSub;
+    for (const auto& k : keys_with_letter(values, letter)) {
+        largest = std::max(largest, k.sub);
+    }
+    return largest;
+};
+
+template<typename Scalar>
+inline auto get_largest_super(const values_t<Scalar>& values, char letter) {
+    key::key_t::superscript_t largest = key::key_t::kInvalidSuper;
+    for (const auto& k : keys_with_letter(values, letter)) {
+        largest = std::max(largest, k.super);
+    }
+    return largest;
+};
 // need a storageOps that can read immer::vector
 
 template<typename Scalar, typename T>
@@ -114,7 +129,7 @@ auto at(const values_t<Scalar>& values, const index_entry_t& entry) -> T {
     }
 
     auto slice = values.data.drop(entry.offset).take(entry.storage_dim);
-    if (slice.size() < entry.tangent_dim) {
+    if (slice.size() < entry.storage_dim) {
         // TODO really don't want this to throw
         throw std::runtime_error("not enough data to load data");
         // fmt::format("not enough data {} {} to load data", slice.size(), entry.storage_dim));
@@ -153,13 +168,64 @@ auto at(const valuesf_t& values, const key::key_t& key) -> T {
     return at<float, T>(values, key);
 }
 
+/*
+template<typename Scalar, typename T>
+inline auto at_or(const values_t<Scalar>& values, const key::key_t& key, const T& default_value)
+    -> T {
+    if (not has(values, key)) {
+        return default_value;
+    }
+    auto entry = values.map.at(key);
+    return at<T>(values, entry);
+}
+*/
+
+template<typename T>
+auto at_or(const values_t<double>& values, const key::key_t& key, const T& default_value) -> T {
+    if (not has(values, key)) {
+        return default_value;
+    }
+    auto entry = values.map.at(key);
+    return at<double, T>(values, entry);
+}
+
+template<typename T>
+auto at_or(const values_t<float>& values, const key::key_t& key, const T& default_value) -> T {
+    if (not has(values, key)) {
+        return default_value;
+    }
+    auto entry = values.map.at(key);
+    return at<float, T>(values, entry);
+}
+
+template<typename T>
+auto at_or(const values_t<double>& values,
+           const key::key_t& key,
+           const values_t<double>& default_values) -> T {
+    if (not has(values, key)) {
+        return at<double, T>(default_values, key);
+    }
+    return at<double, T>(values, key);
+}
+
+template<typename T>
+auto at_or(const values_t<float>& values,
+           const key::key_t& key,
+           const values_t<float>& default_values) -> T {
+    if (not has(values, key)) {
+        return at<float, T>(default_values, key);
+    }
+    return at<float, T>(values, key);
+}
+
 template<typename Scalar>
 inline auto keys(const values_t<Scalar>& values) {
     return keys<Scalar>(values.map);
 };
 
 template<typename Scalar>
-inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset = true) {
+inline auto keys(typename values_t<Scalar>::map_t map, const bool sort_by_offset = true)
+    -> immer::vector<imsym::key::key_t> {
     // Sort the keys by offset so iterating through is saner and more memory friendly
     if (sort_by_offset) {
         std::vector<imsym::key::key_t> keys;
@@ -266,6 +332,22 @@ inline auto merge(const values_t<Scalar>& a, const values_t<Scalar>& b, const va
     return merge(merge(a, b), c);
 }
 
+// merge b over a for keys which exist in both
+template<typename Scalar>
+inline auto merge_over(const values_t<Scalar>& a, const values_t<Scalar>& b) -> values_t<Scalar> {
+    // Create a new values_t<Scalar> with only the keys from b that exist in a
+    values_t<Scalar> trimmed_b = b;
+    trimmed_b.map = {};
+
+    for (const auto& [k, v] : b.map) {
+        if (a.map.count(k)) {
+            trimmed_b.map = std::move(trimmed_b.map).set(k, v);
+        }
+    }
+
+    return merge(a, trimmed_b);
+}
+
 /**
  * Efficiently update the keys from a different structured values, given by
  * `index_a` and `index_b`. This purely copies slices of the data arrays.
@@ -339,10 +421,10 @@ inline values_t<Scalar> copy_data_for_existing_key(const values_t<Scalar>& value
     return values_out;
 }
 /*
- * update a single key from other
+ * update a single key from b
  * this avoids having to know about type info
  * if key exists on both sides, straightforward
- * if key exists in other
+ * if key exists in b
  * - copy the data from other
  */
 template<typename Scalar>
@@ -383,6 +465,22 @@ inline values_t<Scalar> extract(const values_t<Scalar>& other, const index_t& in
         values.map = move(values.map).set(entry.key, entry);
     }
     return values;
+}
+
+// remove keys from a
+template<typename Scalar, typename Container>
+inline auto drop_keys(const values_t<Scalar>& a, const Container& keys)
+    -> std::enable_if_t<std::is_same_v<typename Container::value_type, imsym::key::key_t>,
+                        values_t<Scalar>> {
+    values_t<Scalar> result = a;
+    for (const auto& key : keys) {
+        result.map = move(result.map).erase(key);
+    }
+
+    // Note: The data is not repacked here. cleanup() should be called
+    // to repack the data and update the offsets in the remaining entries.
+
+    return result;
 }
 
 template<typename Scalar>

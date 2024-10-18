@@ -3,6 +3,6 @@
  * Proprietary and confidential
  * Written by Asa Hammond <asa@automaton.is>, 2021
  */
-#include "imsym/imsym.hh"
+#include "imsym/opt/key.hh"
 
 namespace imsym::key {}   // namespace imsym::key

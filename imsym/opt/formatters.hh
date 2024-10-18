@@ -1,18 +1,24 @@
 #pragma once
 
-//
-#include <immer/flex_vector.hpp>
-#include <immer/map.hpp>
-#include <immer/vector.hpp>
-//
-#include "common/cereal/immer_flex_vector.hh"
-#include "common/cereal/immer_map.hh"
-#include "common/cereal/immer_vector.hh"
-//
-#include "imsym/key.hh"
-#include "imsym/values.hh"
+#include "common/formatter/std.hh"
+#include "imsym/opt/key.hh"
+#include "imsym/opt/types.hh"
+#include "imsym/opt/values.hh"
+#include "imsym/opt/values_ops.hh"
+#include "types.hh"
 
 #include <fmt/core.h>
+template<>
+struct fmt::formatter<imsym::coords_t> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const imsym::coords_t& c, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "coords_t: row: {} col: {}", c.row, c.col);
+    }
+};
 
 // explicitly define the formatters for the imsym uses of flex vector
 // when this is generalized, fmt/ranges kicks in. and blows up
@@ -257,6 +263,7 @@ struct fmt::formatter<imsym::key::key_t> {
         return fmt::format_to(ctx.out(), "{} sub {} super {}", k.letter, k.sub, k.super);
     }
 };
+
 //
 template<>
 struct fmt::formatter<imsym::values::index_entry_t> {
@@ -300,17 +307,16 @@ struct fmt::formatter<imsym::values::valuesd_t> {
     }
 
     template<typename FormatContext>
-    auto format(const imsym::values::valuesd_t& values, FormatContext& ctx) {
+    auto format(const imsym::values::valuesd_t& vals, FormatContext& ctx) {
         fmt::format_to(ctx.out(), "values\n");
-
         const auto full_index =
-            create_index(values, keys<double>(values.map, true));   // sort by offset
-                                                                    //
+            create_index(vals, imsym::values::keys<double>(vals.map, true));   // sort by offset
+                                                                               //
         for (const auto& entry : full_index.entries) {
             fmt::format_to(ctx.out(),
                            "\n\t{} {}",
                            entry,
-                           values.data.drop(entry.offset).take(entry.storage_dim));
+                           vals.data.drop(entry.offset).take(entry.storage_dim));
         }
 
         return ctx.out();
@@ -332,35 +338,77 @@ struct fmt::formatter<immer::flex_vector<imsym::key::key_t>> {
         return fmt::format_to(ctx.out(), "]");
     }
 };
+
 template<>
-struct fmt::formatter<const std::optional<long>&> {
+struct fmt::formatter<immer::vector<imsym::key::key_t>> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
     template<typename FormatContext>
-    auto format(const std::optional<long>& v, FormatContext& ctx) {
-        if (v) {
-            return fmt::format_to(ctx.out(), v.value());
-        } else {
-            return fmt::format_to(ctx.out(), "{}");
+    auto format(const immer::vector<imsym::key::key_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "[");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{} ", e);
         }
+        return fmt::format_to(ctx.out(), "]");
     }
 };
 
-template<typename T>
-struct fmt::formatter<const std::optional<T>&> {
+template<>
+struct fmt::formatter<immer::set<imsym::key::key_t>> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
-    template<typename FormatContext, typename V, typename = std::enable_if_t<std::is_integral_v<T>>>
-    auto format(const std::optional<V>& v, FormatContext& ctx) {
-        if (v) {
-            return fmt::format_to(ctx.out(), v.value());
-        } else {
-            return fmt::format_to(ctx.out(), "{}");
+    template<typename FormatContext>
+    auto format(const immer::set<imsym::key::key_t>& v, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "(");
+        for (const auto& e : v) {
+            fmt::format_to(ctx.out(), "{},", e);
         }
+        return fmt::format_to(ctx.out(), ")");
     }
 };
 
+template<>
+struct fmt::formatter<imsym::dense_matrix_t> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const imsym::dense_matrix_t& m, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "dense_matrix_t.T [ {}\n", m.size);
+        size_t data_idx = 0;
+        for (size_t col_idx = 0; col_idx < m.size.col; col_idx++) {
+            for (size_t row_idx = 0; row_idx < m.size.row; row_idx++) {
+                auto val = m.data[data_idx++];
+                fmt::format_to(ctx.out(), "{},", val);
+            }
+            fmt::format_to(ctx.out(), "\n");
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};
+
+template<>
+struct fmt::formatter<imsym::dense_lt_matrix_t> {
+    static constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const imsym::dense_lt_matrix_t& m, FormatContext& ctx) {
+        fmt::format_to(ctx.out(), "dense_lt_matrix_t.T [ {}\n", m.size);
+        size_t data_idx = 0;
+        for (size_t col_idx = 0; col_idx < m.size.col; col_idx++) {
+            for (size_t row_idx = col_idx; row_idx < m.size.row; row_idx++) {
+                auto val = m.data[data_idx++];
+                fmt::format_to(ctx.out(), "{},", val);
+            }
+            fmt::format_to(ctx.out(), "\n");
+        }
+        return fmt::format_to(ctx.out(), "]");
+    }
+};

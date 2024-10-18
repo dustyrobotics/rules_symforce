@@ -5,10 +5,11 @@
  */
 
 #pragma once
+#include "imsym/opt/key.hh"
+#include "imsym/opt/values.hh"
+#include "imsym/opt/values_ops.hh"
 
-#include "imsym/key.hh"
-#include "imsym/values.hh"
-#include "imsym/values_ops.hh"
+#include <immer/array.hpp>
 //
 #include <symforce/opt/key.h>
 #include <symforce/opt/values.h>
@@ -55,6 +56,14 @@ inline auto to(const immer::vector<imsym::key::key_t>& other) -> std::vector<sym
     return out;
 }
 
+inline auto to(const std::vector<sym::Key>& other) -> immer::vector<imsym::key::key_t> {
+    auto out = immer::vector<imsym::key::key_t>{};
+    for (const auto k : other) {
+        out = std::move(out).push_back(to(k));
+    }
+    return out;
+}
+
 }   // namespace imsym::key
 
 namespace imsym::values {
@@ -82,10 +91,8 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
                   "Calling Values.Set on mismatched scalar type.");
 
     const auto type = sym::StorageOps<T>::TypeEnum();
-    // bool is_new = false;
 
-    if (!values.map.count(key)) {
-        // is_new = true;
+    if (not values.map.count(key)) {
         auto entry = values::index_entry_t{};
         entry.key = key;
         entry.type = type;
@@ -104,6 +111,7 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
 
     } else {
         if (values.map.at(key).type != type) {
+            // TODO make monadic with expected{}
             // TODO(hayk): Return an error enum instead of an exception?
             throw std::runtime_error("Calling Set on the wrong value type.");
         }
@@ -127,6 +135,21 @@ inline auto set(values_t<Scalar> values, const imsym::key::key_t& key, const T& 
 template<typename Scalar, typename T>
 inline auto set(sym::Values<Scalar>& values, key::key_t key, const T& value) {
     values.Set(to(key), value);
+    return values;
+};
+
+// only update an existing key, and keep its same type
+template<typename Scalar, typename T>
+inline auto update(values_t<Scalar> values, const imsym::key::key_t& key, const T& value) {
+    // make sure the key is present and we aren't changing the type in the map
+    if (values.map.count(key)) {
+        const auto type = sym::StorageOps<T>::TypeEnum();
+        if (values.map.at(key).type != type) {
+            return values;
+        }
+        return imsym::values::set(values, key, value);
+    }
+    // otherwise return untouched values
     return values;
 };
 
@@ -157,7 +180,7 @@ template<typename Scalar>
 inline auto clone(const values_t<Scalar>& other) -> sym::Values<Scalar> {
     auto values = sym::Values<Scalar>{};
 
-    // TODO really just need to be able to set they map and data values directly
+    // TODO really just need to be able to set the map and data values directly
     // here we set the values one at a time
     for (const auto& entry : create_index(other, keys<Scalar>(other)).entries) {
         const auto& key = entry.key;
@@ -458,5 +481,41 @@ inline auto clone(const values_t<Scalar>& other) -> sym::Values<Scalar> {
     return values;
 }
 
+template<typename Scalar>
+inline auto copy_entry_storage(values_t<Scalar> values, auto entry) {
+    auto data = values.data.drop(entry.offset);
+    std::vector<Scalar> storage_data(entry.storage_dim);
+    for (size_t i = 0; i < entry.storage_dim; i++) {
+        storage_data[i] = data.at(i);
+    }
+    return storage_data;
+};
+
 }   // namespace imsym::values
 
+namespace sym {
+
+//
+// * Polymorphic helper to return tangent vector for a given value type
+//
+template<typename T, typename Scalar = typename sym::StorageOps<T>::Scalar>
+auto TangentVecHelper(const Scalar* const storage_this,
+                      const Scalar epsilon,
+                      const int32_t tangent_dim) -> immer::array<Scalar> {   // tangent_dim
+
+    const T t1 = sym::StorageOps<T>::FromStorage(storage_this);
+    const auto tangent_vec = sym::LieGroupOps<T>::ToTangent(t1, epsilon);
+
+    return immer::array<Scalar>(tangent_vec.data(), tangent_vec.data() + tangent_dim);
+}
+
+template<typename Scalar>
+auto MatrixTangentVecHelper(const Scalar* const storage_this,
+                            const Scalar,   // epsilon
+                            const int32_t tangent_dim) -> immer::array<Scalar> {
+    return immer::array<Scalar>(storage_this, storage_this + tangent_dim);
+}
+
+BY_TYPE_HELPER(TangentVecByType, TangentVecHelper, MatrixTangentVecHelper);
+
+}   // namespace sym

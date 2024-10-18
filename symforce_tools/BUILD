@@ -3,14 +3,28 @@ load("lcmgen.bzl", "cc_lcm_library")
 load("@symforce_requirements//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
+
 # generator to run stripped versions of the symforce codegen
 # using injected templates and user types
+py_binary(
+    name = "generate_gen_no_sym",
+    srcs = ["generate_gen_no_sym.py"],
+    main = "generate_gen_no_sym.py",
+    args = ["--color", "always"],
+    deps = [
+        ":codegen_utils",
+        requirement("click"),
+    ],
+)
+
 py_binary(
     name = "generate_gen",
     srcs = ["generate_gen.py"],
     main = "generate_gen.py",
     deps = [
         ":codegen_utils",
+        requirement("click"),
+        "@symforce_repo//:symforce_sym",
     ],
 )
 
@@ -21,6 +35,12 @@ py_binary(
     main = "compiler.py",
     deps = [
         ":codegen_utils",
+        "@symforce_repo//:symforce_sym",
+        requirement("click"),
+    ],
+    data = [
+        # process won't recognize these as python files, load as data
+        "@symforce_repo//:symforce_sym",
     ],
 )
 
@@ -29,12 +49,10 @@ py_binary(
     srcs = ["lcmgen.py"],
     main = "lcmgen.py",
     deps = [
-        requirement("skymarshal"),
+        "@symforce_repo//:skymarshal",
         requirement("typing-extensions"),
     ],
 )
-
-
 
 py_library(
     name = "backend_configs",
@@ -63,7 +81,7 @@ filegroup(
 )
 
 # stripped versions of the codegen files in symforce source
-# they are stripped so that lcm types can be injected and agregated through bazel
+# they are stripped down so that lcm types can be injected and agregated through bazel
 # less "magic" and more explicit
 py_library(
     name = "codegen_utils",
@@ -79,6 +97,9 @@ py_library(
     deps = [
         "@symforce_repo//:py",
         ":backend_configs",
+        requirement("clang-format"),
+        requirement("typing-extensions"),
+        requirement("jinja2"),
     ],
     data = [
         ":lcm_templates"
