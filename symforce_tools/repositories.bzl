@@ -2,13 +2,20 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-def symforce_deps():
+
+def symforce_deps():        
+    maybe(
+        native.new_local_repository,
+        name = "gmp",
+        build_file = "@rules_symforce//symengine_tools:gmp.BUILD",
+        path = "/"
+    )
     maybe(
         new_git_repository,
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
-        remote = "git@github.com:symforce-org/symforce.git",
-        commit = "02d9d2a6bd6fcb746ccde6cc790a69021765cee2",
+        remote = "git@github.com:asa/symforce.git",
+        commit = "a23ea2c740dcfc751329af59b3d0c5903ade807b"
     )
     maybe(
         new_git_repository,
@@ -28,7 +35,32 @@ def symforce_deps():
         name = "cython_repo",
         remote = "https://github.com/asa/cython.git",
         #tag = "0.29.37.1",
-        branch = "autodev",
+        #branch = "autodev",
+        commit="34282cc214da10a3d0759067ca1c6ad095051cf1"
+    )
+    maybe(
+        http_archive,
+        # this version is claimed by symforce authors to be less buggy
+        name = "metis",
+        build_file = "@rules_symforce//symforce_tools:metis.BUILD",
+        sha256 = "76faebe03f6c963127dbb73c13eab58c9a3faeae48779f049066a21c087c5db2",
+        strip_prefix = "metis-5.1.0",
+        url = "https://symforce-org.github.io/downloads/metis-5.1.0.tar.gz",
+    )
+    maybe(
+        new_git_repository,
+        name = "tl_optional",
+        build_file_content = """
+cc_library(
+    name = "tl_optional",
+    srcs = ["include/tl/optional.hpp"],
+    includes=["include"],
+    visibility = ["//visibility:public"],
+)
+""",
+        commit = "5c4876059c1168d5fa3c945bd8dd05ebbe61b6fe",
+        remote = "https://github.com/TartanLlama/optional.git",
+        shallow_since = "1561462697 +0100",
     )
     maybe(
         new_git_repository,
