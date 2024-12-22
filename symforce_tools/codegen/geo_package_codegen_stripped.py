@@ -246,16 +246,17 @@ def generate(
 
         # Package init
         #(asa) this is handled in cam package codegen
-        #templates.add(
-        #    template_path=Path("geo_package", "__init__.py.jinja"),
-        #    data=dict(
-        #        Codegen.common_data(),
-        #        all_types = GEO_TYPES,
-        #        numeric_epsilon=sf.numeric_epsilon,
-        #    ),
-        #    config=config.render_template_config,
-        #    output_path=package_dir / "__init__.py",
-        #)
+        # the cam and geo packages overwrite this same file. There should be a better way to redner both in
+        templates.add(
+            template_path=Path("geo_package", "__init__.py.jinja"),
+            data=dict(
+                Codegen.common_data(),
+                all_types = GEO_TYPES,
+                numeric_epsilon=sf.numeric_epsilon,
+            ),
+            config=config.render_template_config,
+            output_path=package_dir / "__init__.py",
+        )
 
         ## Test example
         #for name in ("geo_package_python_test.py",):

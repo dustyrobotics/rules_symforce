@@ -1,4 +1,5 @@
 # an impl that mirrors the interface of the generate_gen python tool
+load("@bazel_skylib//lib:paths.bzl", "paths")
 
 def _generate_gen_impl(ctx):
     subcommand = ctx.label.name.replace("_", "-")
@@ -13,9 +14,8 @@ def _generate_gen_impl(ctx):
         arguments.append("--cam_types")
         arguments.append(t)
 
-
     ctx.actions.run(
-        inputs = [], # backends
+        inputs = [],  # backends
         outputs = [output_dir],
         arguments = arguments,
         mnemonic = "SymforceCompile",
@@ -29,10 +29,10 @@ def _generate_gen_impl(ctx):
         includes = depset([output_dir.path + "/cpp"]),
     )
     return [
-            DefaultInfo(files = depset([output_dir])),
-            CcInfo(
-                compilation_context = compilation_context,
-            )
+        DefaultInfo(files = depset([output_dir])),
+        CcInfo(
+            compilation_context = compilation_context,
+        ),
     ]
 
 def _generate_py_gen_impl(ctx):
@@ -48,9 +48,9 @@ def _generate_py_gen_impl(ctx):
         arguments.append("--cam_types")
         arguments.append(t)
 
-
+    #print(ctx.executable.compiler, arguments, output_dir)
     ctx.actions.run(
-        inputs = [], # backends
+        inputs = [],  # backends
         outputs = [output_dir],
         arguments = arguments,
         mnemonic = "SymforceCompile",
@@ -58,11 +58,17 @@ def _generate_py_gen_impl(ctx):
         executable = ctx.executable.compiler,
     )
 
+    python_import_path = paths.join(
+        ctx.workspace_name,  # This will be resolved in the binary's runfiles
+        output_dir.short_path,
+        "python",
+    )
     return [
-            DefaultInfo(files = depset([output_dir])),
-            PyInfo(
-                    transitive_sources = depset([output_dir])
-            )
+        DefaultInfo(files = depset([output_dir])),
+        PyInfo(
+            transitive_sources = depset([output_dir]),
+            imports = depset([python_import_path]),
+        ),
     ]
 
 def _generate_gen_lcm_impl(ctx):
@@ -89,14 +95,14 @@ def _generate_gen_lcm_impl(ctx):
 
     # lcm provider?
     return [
-            DefaultInfo(files = depset([output_lcm_file])),
+        DefaultInfo(files = depset([output_lcm_file])),
     ]
 
 _gen_sym_geo_resource = rule(
     attrs = {
         "geo_types": attr.string_list(
-                mandatory = True,
-                doc = "The types to generate c++ for",
+            mandatory = True,
+            doc = "The types to generate c++ for",
         ),
         "compiler": attr.label(
             executable = True,
@@ -110,10 +116,10 @@ _gen_sym_geo_resource = rule(
 _gen_sym_package = rule(
     attrs = {
         "geo_types": attr.string_list(
-                doc = "The geo types to generate c++ for",
-        ),        
+            doc = "The geo types to generate c++ for",
+        ),
         "cam_types": attr.string_list(
-                doc = "The camera types to generate c++ for",
+            doc = "The camera types to generate c++ for",
         ),
         "compiler": attr.label(
             executable = True,
@@ -127,10 +133,10 @@ _gen_sym_package = rule(
 _gen_py_sym_package = rule(
     attrs = {
         "geo_types": attr.string_list(
-                doc = "The types to generate c++ for",
-        ),        
+            doc = "The types to generate python for",
+        ),
         "cam_types": attr.string_list(
-                doc = "The types to generate c++ for",
+            doc = "The types to generate python for",
         ),
         "compiler": attr.label(
             executable = True,
@@ -142,14 +148,14 @@ _gen_py_sym_package = rule(
 )
 
 _gen_sym_util_package = rule(
-    attrs = {        
+    attrs = {
         "geo_types": attr.string_list(
-                mandatory = True,
-                doc = "The geo types to generate c++ for",
-        ),        
+            mandatory = True,
+            doc = "The geo types to generate c++ for",
+        ),
         "cam_types": attr.string_list(
-                mandatory = True,
-                doc = "The camera types to generate c++ for",
+            mandatory = True,
+            doc = "The camera types to generate c++ for",
         ),
         "compiler": attr.label(
             executable = True,
@@ -161,14 +167,14 @@ _gen_sym_util_package = rule(
 )
 
 _gen_sym_lcm_package = rule(
-    attrs = {        
+    attrs = {
         "geo_types": attr.string_list(
-                mandatory = True,
-                doc = "The geo types to generate c++ for",
-        ),        
+            mandatory = True,
+            doc = "The geo types to generate c++ for",
+        ),
         "cam_types": attr.string_list(
-                mandatory = True,
-                doc = "The camera types to generate c++ for",
+            mandatory = True,
+            doc = "The camera types to generate c++ for",
         ),
         "compiler": attr.label(
             executable = True,
@@ -180,44 +186,42 @@ _gen_sym_lcm_package = rule(
 )
 
 # generate a typed resource
-def cc_gen_pkg(name,
-               geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
-               cam_types = []
-        ):
-        _gen_sym_package(
-                name = name,
-                geo_types = geo_types,
-                cam_types = cam_types,        
-        )
+def cc_gen_pkg(
+        name,
+        geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
+        cam_types = []):
+    _gen_sym_package(
+        name = name,
+        geo_types = geo_types,
+        cam_types = cam_types,
+    )
 
-def py_gen_pkg(name,
-               geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
-               cam_types = []
-        ):
-        _gen_py_sym_package(
-                name = name,
-                geo_types = geo_types,
-                cam_types = cam_types,        
-        )
+def py_gen_pkg(
+        name,
+        geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
+        cam_types = []):
+    _gen_py_sym_package(
+        name = name,
+        geo_types = geo_types,
+        cam_types = cam_types,
+    )
 
+def lcm_pkg(
+        name,
+        geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
+        cam_types = []):
+    _gen_sym_lcm_package(
+        name = name,
+        geo_types = geo_types,
+        cam_types = cam_types,
+    )
 
-def lcm_pkg(name,
-               geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
-               cam_types = []
-        ):
-        _gen_sym_lcm_package(
-                name = name,
-                geo_types = geo_types,
-                cam_types = cam_types,        
-        )
-
-
-def cc_sym_util_pkg(name = "sym_util_package",
-               geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
-               cam_types = []
-        ):
-        _gen_sym_util_package(
-                name = name,
-                geo_types = geo_types,
-                cam_types = cam_types,
-        )
+def cc_sym_util_pkg(
+        name = "sym_util_package",
+        geo_types = ["sf.Rot2", "sf.Rot3", "sf.Pose2", "sf.Pose3", "sf.Unit3"],
+        cam_types = []):
+    _gen_sym_util_package(
+        name = name,
+        geo_types = geo_types,
+        cam_types = cam_types,
+    )

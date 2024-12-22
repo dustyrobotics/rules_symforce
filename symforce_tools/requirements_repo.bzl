@@ -1,4 +1,3 @@
-
 def _generate_requirements_impl(repository_ctx):
     # Read the template file
     template_file = repository_ctx.read(repository_ctx.attr.template)
@@ -9,6 +8,7 @@ def _generate_requirements_impl(repository_ctx):
 
     # Write the substituted content to the output file
     repository_ctx.file("requirements.txt", substituted_content)
+
     # Create the BUILD file
     repository_ctx.file("BUILD", "exports_files(['requirements.txt'])")
 
