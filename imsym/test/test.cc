@@ -9,23 +9,23 @@
 #include "imsym/opt/values_ext_ops.hh"
 #include "imsym/opt/values_ops.hh"
 //
-#include <catch2/catch_all.hpp>
+#include "catch2/catch_all.hpp"
 // first spdlog include wins
-#include <spdlog/spdlog.h>
+#include "spdlog/spdlog.h"
 //
-#include <sym/factors/between_factor_pose3.h>
-#include <sym/factors/between_factor_rot3.h>
-#include <sym/factors/prior_factor_pose3.h>
-#include <sym/factors/prior_factor_pose3_position.h>
-#include <sym/factors/prior_factor_rot3.h>
-#include <sym/index_entry_t.hpp>
-#include <sym/pose3.h>
-#include <sym/util/type_ops.h>
-#include <symforce/opt/factor.h>
-#include <symforce/opt/key.h>
-#include <symforce/opt/optimizer.h>
-#include <symforce/opt/util.h>
-#include <symforce/opt/values.h>
+#include "sym/factors/between_factor_pose3.h"
+#include "sym/factors/between_factor_rot3.h"
+#include "sym/factors/prior_factor_pose3.h"
+#include "sym/factors/prior_factor_pose3_position.h"
+#include "sym/factors/prior_factor_rot3.h"
+#include "sym/index_entry_t.hpp"
+#include "sym/pose3.h"
+#include "sym/util/type_ops.h"
+#include "symforce/opt/factor.h"
+#include "symforce/opt/key.h"
+#include "symforce/opt/optimizer.h"
+#include "symforce/opt/util.h"
+#include "symforce/opt/values.h"
 
 using Catch::Matchers::WithinAbs;
 constexpr double tol = 1e-10;
