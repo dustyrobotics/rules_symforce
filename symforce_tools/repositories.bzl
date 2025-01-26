@@ -14,7 +14,7 @@ def symforce_deps():
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
         remote = "git@github.com:asa/symforce.git",
-        commit = "928fa0a0476da4728ed0a66777567b71b914a4cc",
+        commit = "a23ea2c740dcfc751329af59b3d0c5903ade807b",
     )
     maybe(
         new_git_repository,

@@ -3,8 +3,7 @@ def _generate_requirements_impl(repository_ctx):
     template_file = repository_ctx.read(repository_ctx.attr.template)
 
     # Perform template substitution
-    substituted_content = template_file.replace("file:", "#file:")
-    #.replace("ruff==0.3.2", "ruff==0.3.4")
+    substituted_content = template_file.replace("file:", "#file:").replace("ruff==0.3.2", "ruff==0.9.3")
 
     # Write the substituted content to the output file
     repository_ctx.file("requirements.txt", substituted_content)
