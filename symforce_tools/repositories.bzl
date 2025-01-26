@@ -14,7 +14,7 @@ def symforce_deps():
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
         remote = "git@github.com:asa/symforce.git",
-        commit = "a23ea2c740dcfc751329af59b3d0c5903ade807b",
+        commit = "480127da16d5a97c74e4bd1f1ed8b49a4fe4b800",
     )
     maybe(
         new_git_repository,
@@ -97,6 +97,7 @@ def symforce_local_deps(root):
         name = "cython_repo",
         path = root + "/cython",
     )
+
     native.local_repository(
         name = "symenginepy",
         path = root + "/symenginepy",
