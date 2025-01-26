@@ -248,7 +248,6 @@ def symforce_sym(output_dir, geo_types, cam_types):
     from rules_symforce.symforce_tools.codegen import cam_package_codegen_stripped
     from rules_symforce.symforce_tools.codegen.backends.python.python_config import PythonConfig
 
-
     py_config = PythonConfig()
     py_base = output_dir / "python"
 

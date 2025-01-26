@@ -2,20 +2,19 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-
-def symforce_deps():        
+def symforce_deps():
     maybe(
         native.new_local_repository,
         name = "gmp",
         build_file = "@rules_symforce//symengine_tools:gmp.BUILD",
-        path = "/"
+        path = "/",
     )
     maybe(
         new_git_repository,
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
         remote = "git@github.com:asa/symforce.git",
-        commit = "a23ea2c740dcfc751329af59b3d0c5903ade807b"
+        commit = "928fa0a0476da4728ed0a66777567b71b914a4cc",
     )
     maybe(
         new_git_repository,
@@ -36,7 +35,7 @@ def symforce_deps():
         remote = "https://github.com/asa/cython.git",
         #tag = "0.29.37.1",
         #branch = "autodev",
-        commit="34282cc214da10a3d0759067ca1c6ad095051cf1"
+        commit = "34282cc214da10a3d0759067ca1c6ad095051cf1",
     )
     maybe(
         http_archive,

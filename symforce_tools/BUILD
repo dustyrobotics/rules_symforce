@@ -1,6 +1,6 @@
+load("@symforce_requirements//:requirements.bzl", "requirement")
 load("codegen.bzl", "cc_symforce_library")
 load("lcmgen.bzl", "cc_lcm_library")
-load("@symforce_requirements//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -9,8 +9,11 @@ package(default_visibility = ["//visibility:public"])
 py_binary(
     name = "generate_gen_no_sym",
     srcs = ["generate_gen_no_sym.py"],
+    args = [
+        "--color",
+        "always",
+    ],
     main = "generate_gen_no_sym.py",
-    args = ["--color", "always"],
     deps = [
         ":codegen_utils",
         requirement("click"),
@@ -32,15 +35,16 @@ py_binary(
 py_binary(
     name = "compiler",
     srcs = ["compiler.py"],
+    data = [
+        # process won't recognize these as python files, load as data
+        # TODO change this to call these files python files
+        "@symforce_repo//:symforce_sym",
+    ],
     main = "compiler.py",
     deps = [
         ":codegen_utils",
         "@symforce_repo//:symforce_sym",
         requirement("click"),
-    ],
-    data = [
-        # process won't recognize these as python files, load as data
-        "@symforce_repo//:symforce_sym",
     ],
 )
 
@@ -59,24 +63,24 @@ py_library(
     srcs = glob([
         "codegen/backends/*/*.py",
     ]),
-    deps = [
-    ],
     data = [
-            ":backends"
+        ":backends",
+    ],
+    deps = [
     ],
 )
 
 filegroup(
     name = "backends",
     srcs = glob([
-        "codegen/backends/**"
+        "codegen/backends/**",
     ]),
 )
 
 filegroup(
     name = "lcm_templates",
     srcs = glob([
-        "codegen/lcm_templates/**"
+        "codegen/lcm_templates/**",
     ]),
 )
 
@@ -86,23 +90,22 @@ filegroup(
 py_library(
     name = "codegen_utils",
     srcs = [
-        "codegen/geo_package_codegen_stripped.py",
         "codegen/cam_package_codegen_stripped.py",
         "codegen/geo_factors_codegen_stripped.py",
-        "codegen/slam_factors_codegen_stripped.py",
-        "codegen/types_package_codegen_stripped.py",
-        "codegen/sym_util_package_codegen_stripped.py",
+        "codegen/geo_package_codegen_stripped.py",
         "codegen/lcm_template_dir.py",
+        "codegen/slam_factors_codegen_stripped.py",
+        "codegen/sym_util_package_codegen_stripped.py",
+        "codegen/types_package_codegen_stripped.py",
+    ],
+    data = [
+        ":lcm_templates",
     ],
     deps = [
-        "@symforce_repo//:py",
         ":backend_configs",
+        "@symforce_repo//:py",
         requirement("clang-format"),
         requirement("typing-extensions"),
         requirement("jinja2"),
     ],
-    data = [
-        ":lcm_templates"
-    ],
 )
-

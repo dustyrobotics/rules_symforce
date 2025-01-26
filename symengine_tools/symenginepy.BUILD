@@ -14,7 +14,7 @@ cc_library(
     srcs = ["symengine/lib/pywrapper.cpp"],
     hdrs = ["symengine/lib/pywrapper.h"],
     deps = [
-        "@python",
+        "@python_dev",
         "@symengine_repo//:symengine",
     ],
 )
