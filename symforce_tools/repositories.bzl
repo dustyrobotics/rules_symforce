@@ -13,26 +13,26 @@ def symforce_deps():
         new_git_repository,
         name = "symforce_repo",
         build_file = "@rules_symforce//symforce_tools:symforce.BUILD",
-        remote = "git@github.com:asa/symforce.git",
+        remote = "git@github.com:dustyrobotics/symforce.git",
         commit = "480127da16d5a97c74e4bd1f1ed8b49a4fe4b800",
     )
     maybe(
         new_git_repository,
         name = "symengine_repo",
-        remote = "https://github.com/asa/symengine.git",
+        remote = "https://github.com/dustyrobotics/symengine.git",
         build_file = "@rules_symforce//symengine_tools:symengine.BUILD",
         commit = "9eb14aadf56639a0b154a44962a888a531fdeb63",
     )
     maybe(
         new_git_repository,
         name = "symenginepy",
-        remote = "https://github.com/asa/symenginepy.git",
+        remote = "https://github.com/dustyrobotics/symenginepy.git",
         commit = "762f83db11ff369a0206ac0bc9b5e5b356b434e3",
     )
     maybe(
         new_git_repository,
         name = "cython_repo",
-        remote = "https://github.com/asa/cython.git",
+        remote = "https://github.com/dustyrobotics/cython.git",
         #tag = "0.29.37.1",
         #branch = "autodev",
         commit = "34282cc214da10a3d0759067ca1c6ad095051cf1",
